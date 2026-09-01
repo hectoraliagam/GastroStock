@@ -19,6 +19,7 @@ def get_db_connection():
         port=os.getenv("DB_PORT", 3306)
     )
 
+# Modelos Generales
 class LoginData(BaseModel):
     username: str
     password: str
@@ -36,22 +37,115 @@ class ItemInventario(BaseModel):
     stock_minimo: float
     costo_unitario: float
 
+# Modelos Superadmin
+class NuevoCliente(BaseModel):
+    nombre_restaurante: str
+    username: str
+    password: str
+
+class EstadoCliente(BaseModel):
+    estado: str
+
 @app.post("/api/login")
 def login(data: LoginData):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT id, id_restaurante, username, rol FROM usuarios WHERE username = %s AND password = %s", 
-        (data.username, data.password)
-    )
+    # Hacemos LEFT JOIN para traer el estado del restaurante (si tiene uno)
+    query = """
+        SELECT u.id, u.id_restaurante, u.username, u.rol, r.estado 
+        FROM usuarios u 
+        LEFT JOIN restaurantes r ON u.id_restaurante = r.id 
+        WHERE u.username = %s AND u.password = %s
+    """
+    cursor.execute(query, (data.username, data.password))
     user = cursor.fetchone()
     cursor.close()
     conn.close()
     
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    
+    # Bloquear si no pagó (solo a usuarios que no son superadmin)
+    if user['rol'] != 'superadmin' and user['estado'] == 'suspendido': # type: ignore
+        raise HTTPException(status_code=403, detail="Membresía suspendida. Contacte al proveedor.")
+        
     return {"status": "success", "user": user}
 
+# ==========================================
+# RUTAS SUPERADMIN (PANEL MAESTRO)
+# ==========================================
+@app.get("/api/admin/restaurantes")
+def admin_get_restaurantes():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT r.id, r.nombre, r.estado, u.username, u.password 
+        FROM restaurantes r
+        LEFT JOIN usuarios u ON r.id = u.id_restaurante AND u.rol = 'dueno'
+        ORDER BY r.id DESC
+    """)
+    clientes = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"status": "success", "data": clientes}
+
+@app.post("/api/admin/restaurantes")
+def admin_crear_cliente(cliente: NuevoCliente):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        conn.start_transaction()
+        # 1. Crear Restaurante
+        cursor.execute("INSERT INTO restaurantes (nombre) VALUES (%s)", (cliente.nombre_restaurante,))
+        nuevo_id_rest = cursor.lastrowid
+        # 2. Crear usuario dueño
+        cursor.execute("INSERT INTO usuarios (id_restaurante, username, password, rol) VALUES (%s, %s, %s, 'dueno')", 
+                       (nuevo_id_rest, cliente.username, cliente.password))
+        conn.commit()
+        return {"status": "success", "message": "Cliente creado exitosamente"}
+    except mysql.connector.Error as err:
+        conn.rollback()
+        if err.errno == 1062:
+            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe")
+        raise HTTPException(status_code=400, detail=str(err))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/api/admin/restaurantes/{id_restaurante}/estado")
+def admin_cambiar_estado(id_restaurante: int, data: EstadoCliente):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE restaurantes SET estado = %s WHERE id = %s", (data.estado, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": f"Estado cambiado a {data.estado}"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/admin/restaurantes/{id_restaurante}")
+def admin_eliminar_cliente(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Por las llaves foráneas ON DELETE CASCADE, esto borrará inventario, movimientos y usuarios
+        cursor.execute("DELETE FROM restaurantes WHERE id = %s", (id_restaurante,))
+        conn.commit()
+        return {"status": "success", "message": "Cliente eliminado con todos sus datos"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+# ==========================================
+# RUTAS CLIENTES (INVENTARIO Y KARDEX)
+# ==========================================
 @app.get("/api/inventario/{id_restaurante}")
 def obtener_inventario(id_restaurante: int):
     conn = get_db_connection()
@@ -171,6 +265,6 @@ def generar_lista_compras_whatsapp(id_restaurante: int):
         prov = item['proveedor'] or "Sin asignar" # type: ignore
         tel = item['telefono'] or "-" # type: ignore
         mensaje_wa += f"- {item['ingrediente']} (Stock: {item['cantidad_actual']}{item['unidad']})\n" # type: ignore
-        mensaje_wa += f"  Proveedor: {prov} ({tel})\n" # type: ignore
+        mensaje_wa += f"  Proveedor: {prov} ({tel})\n"
         mensaje_wa += f"  Sugerido: {comprar}{item['unidad']}\n\n" # type: ignore
     return {"status": "success", "mensaje_generado": mensaje_wa}

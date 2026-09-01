@@ -1,5 +1,5 @@
-const API_URL = 'http://127.0.0.1:8000/api';
-// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+// const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 const loader = document.getElementById('loading');
 const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
 
@@ -48,6 +48,17 @@ function cerrarSesion() {
 
 function iniciarDashboard() {
     document.getElementById('login-screen').style.display = 'none';
+    
+    // Si eres el administrador principal, muestras tu panel privado
+    if (currentUser.rol === 'superadmin') {
+        document.getElementById('superadmin-dashboard').style.display = 'block';
+        document.getElementById('app-dashboard').style.display = 'none';
+        cargarAdminDashboard();
+        return;
+    }
+
+    // Si es un cliente (Dueño o empleado)
+    document.getElementById('superadmin-dashboard').style.display = 'none';
     document.getElementById('app-dashboard').style.display = 'block';
     
     if (currentUser.rol === 'empleado') {
@@ -223,6 +234,110 @@ async function eliminarInsumo(id_insumo) {
             renderizarTablaCrud();
             showToast("Insumo eliminado", "success");
         } else { showToast("No se puede eliminar porque tiene movimientos guardados.", "error"); }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
+}
+
+// ==========================================
+// FUNCIONES DEL PANEL SUPERADMIN
+// ==========================================
+async function cargarAdminDashboard() {
+    try {
+        const res = await fetch(`${API_URL}/admin/restaurantes`);
+        const result = await res.json();
+        const tbody = document.getElementById('tabla-admin-clientes');
+        tbody.innerHTML = '';
+        
+        result.data.forEach(cliente => {
+            const estadoHtml = cliente.estado === 'activo' 
+                ? `<span class="badge badge-success">Activo</span>` 
+                : `<span class="badge badge-danger">Suspendido</span>`;
+                
+            const btnSuspenderText = cliente.estado === 'activo' ? 'Suspender' : 'Activar';
+            const nuevoEstado = cliente.estado === 'activo' ? 'suspendido' : 'activo';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${cliente.id}</td>
+                    <td><strong>${cliente.nombre}</strong></td>
+                    <td><small>U: ${cliente.username}<br>P: ${cliente.password}</small></td>
+                    <td>${estadoHtml}</td>
+                    <td>
+                        <button class="btn-action edit" onclick="cambiarEstadoCliente(${cliente.id}, '${nuevoEstado}')">${btnSuspenderText}</button>
+                        <button class="btn-action delete" onclick="eliminarCliente(${cliente.id})">Borrar</button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        showToast("Error cargando clientes", "error");
+    }
+}
+
+document.getElementById('formNuevoCliente')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoader(true);
+    
+    const payload = {
+        nombre_restaurante: document.getElementById('admin-restaurante').value,
+        username: document.getElementById('admin-user').value,
+        password: document.getElementById('admin-pass').value
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/admin/restaurantes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        if(response.ok) {
+            document.getElementById('formNuevoCliente').reset();
+            cargarAdminDashboard();
+            showToast("Cliente creado. Ya puede iniciar sesión.", "success");
+        } else { 
+            showToast(result.detail || "Error al crear", "error"); 
+        }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
+});
+
+async function cambiarEstadoCliente(idRestaurante, nuevoEstado) {
+    if(!confirm(`¿Deseas cambiar el estado a ${nuevoEstado}?`)) return;
+    toggleLoader(true);
+    try {
+        const res = await fetch(`${API_URL}/admin/restaurantes/${idRestaurante}/estado`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: nuevoEstado })
+        });
+        if(res.ok) {
+            cargarAdminDashboard();
+            showToast(`Cliente ${nuevoEstado}`, "success");
+        } else {
+            showToast("Error al actualizar estado", "error");
+        }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
+}
+
+async function eliminarCliente(idRestaurante) {
+    const userCode = prompt("Peligro: Esto borrará todo el historial e inventario de este cliente. Escribe 'BORRAR' para confirmar.");
+    if (userCode !== "BORRAR") {
+        showToast("Operación cancelada", "success");
+        return;
+    }
+    
+    toggleLoader(true);
+    try {
+        const response = await fetch(`${API_URL}/admin/restaurantes/${idRestaurante}`, { method: 'DELETE' });
+        if(response.ok) {
+            cargarAdminDashboard();
+            showToast("Cliente y datos eliminados.", "success");
+        } else { 
+            showToast("Error al eliminar", "error"); 
+        }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
 }

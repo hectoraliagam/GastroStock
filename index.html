@@ -27,6 +27,46 @@
         </div>
     </div>
 
+    <!-- PANTALLA SUPERADMIN (Master) -->
+    <div id="superadmin-dashboard" class="dashboard-container" style="display: none;">
+        <nav class="navbar">
+            <h1>GastroStock <span style="color:var(--danger)">[MASTER]</span></h1>
+            <div class="nav-actions">
+                <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
+            </div>
+        </nav>
+        
+        <div class="container" style="display: block;">
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">NUEVO CLIENTE</div>
+                <form id="formNuevoCliente" class="crud-form-row" style="flex-wrap: wrap;">
+                    <input type="text" id="admin-restaurante" placeholder="Nombre Restaurante" required style="flex:1; min-width: 180px;">
+                    <input type="text" id="admin-user" placeholder="Usuario (Dueño)" required style="flex:1; min-width: 120px;">
+                    <input type="text" id="admin-pass" placeholder="Contraseña" required style="flex:1; min-width: 120px;">
+                    <button type="submit" class="btn-submit" style="width: auto;">+ Crear Cliente</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">CARTERA DE CLIENTES</div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Restaurante</th>
+                                <th>Acceso (User/Pass)</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-admin-clientes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="app-dashboard" class="dashboard-container">
         <nav class="navbar">
             <h1>GastroStock</h1>
