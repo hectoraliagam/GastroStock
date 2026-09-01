@@ -3,201 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Inventario | SaaS Demo</title>
+    <title>Kardex Pro | Panel de Administración</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .dashboard { display: flex; gap: 20px; max-width: 1100px; margin: auto; flex-wrap: wrap; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .form-section { flex: 1; min-width: 300px; }
-        .table-section { flex: 2; min-width: 500px; overflow-x: auto; }
-        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; font-size: 1.5em; }
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #eab308;
+            --dark: #1e293b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+        }
         
-        /* Formulario */
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); margin: 0; padding: 0; color: var(--dark); }
+        
+        /* Navbar */
+        .navbar { background-color: var(--dark); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar h1 { margin: 0; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        .btn-whatsapp { background-color: #25D366; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-whatsapp:hover { background-color: #1ebc59; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(37, 211, 102, 0.3); }
+
+        /* Contenedor Principal */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 2fr; gap: 25px; }
+
+        /* Tarjetas (Cards) */
+        .card { background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+        .card-header { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; color: var(--dark); }
+
+        /* Widget de Valorización */
+        .widget-dinero { background: linear-gradient(135deg, var(--primary), #1d4ed8); color: white; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
+        .widget-dinero h3 { margin: 0 0 5px 0; font-size: 1rem; font-weight: 400; opacity: 0.9; }
+        .widget-dinero .monto { font-size: 2.5rem; font-weight: bold; margin: 0; }
+
+        /* Formulario Kardex */
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 500; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        button:hover { background-color: #0056b3; }
-        .btn-cancel { background-color: #6c757d; margin-top: 10px; display: none; }
-        
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; font-weight: 500; color: #64748b; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 1rem; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .btn-submit { background-color: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-submit:hover { background-color: #1d4ed8; }
+
         /* Tabla */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background-color: #f8f9fa; font-weight: 600; }
-        .alert-badge { background-color: #dc3545; color: white; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
-        .ok-badge { background-color: #28a745; color: white; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+        th { font-weight: 600; color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        tr:hover { background-color: #f8fafc; }
         
-        /* Botones de acción en tabla */
-        .btn-sm { padding: 6px 10px; width: auto; font-size: 0.85em; margin-right: 5px; }
-        .btn-edit { background-color: #ffc107; color: #000; }
-        .btn-delete { background-color: #dc3545; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .badge-danger { background-color: #fee2e2; color: var(--danger); }
+        .badge-success { background-color: #dcfce3; color: var(--success); }
+
+        /* Animación de carga (Feedback visual) */
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); align-items: center; justify-content: center; z-index: 1000; font-weight: bold; font-size: 1.2rem; color: var(--primary); }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <!-- Panel Izquierdo: Formulario CRUD -->
-    <div class="card form-section">
-        <h2 id="form-title">➕ Nuevo Insumo</h2>
-        <form id="itemForm">
-            <input type="hidden" id="itemId">
-            
-            <div class="form-group">
-                <label>Ingrediente</label>
-                <input type="text" id="ingrediente" required placeholder="Ej. Tomate">
-            </div>
-            
-            <div class="form-group">
-                <label>Unidad de Medida</label>
-                <select id="unidad">
-                    <option value="kg">Kilogramos (kg)</option>
-                    <option value="litros">Litros (L)</option>
-                    <option value="unidades">Unidades (und)</option>
-                    <option value="gramos">Gramos (g)</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Stock Actual</label>
-                <input type="number" id="cantidad" step="0.01" required>
-            </div>
-            
-            <div class="form-group">
-                <label>Stock Mínimo (Alerta)</label>
-                <input type="number" id="minimo" step="0.01" required>
-            </div>
-            
-            <button type="submit" id="btn-save">Guardar Insumo</button>
-            <button type="button" class="btn-cancel" id="btn-cancel">Cancelar Edición</button>
-        </form>
+<!-- Pantalla de Carga -->
+<div class="loading-overlay" id="loading">Actualizando sistema...</div>
+
+<nav class="navbar">
+    <h1>📊 Almacén & Kardex Pro</h1>
+    <button class="btn-whatsapp" onclick="enviarAlertaWhatsApp()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+        </svg>
+        Enviar Reporte al Dueño
+    </button>
+</nav>
+
+<div class="container">
+    <!-- Columna Izquierda: Operaciones -->
+    <div>
+        <!-- Widget Capital -->
+        <div class="widget-dinero">
+            <h3>Capital Invertido en Almacén</h3>
+            <p class="monto" id="capital-total">S/ 0.00</p>
+        </div>
+
+        <!-- Formulario Kardex -->
+        <div class="card">
+            <div class="card-header">📥 Registrar Movimiento (Kardex)</div>
+            <form id="formMovimiento">
+                <div class="form-group">
+                    <label>Insumo</label>
+                    <select id="id_inventario" required>
+                        <!-- Se llena con JS -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de Operación</label>
+                    <select id="tipo" required>
+                        <option value="entrada">Entrada (Compra)</option>
+                        <option value="salida">Salida (Consumo en cocina)</option>
+                        <option value="merma">Merma (Malogrado / Perdido)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Cantidad</label>
+                    <input type="number" id="cantidad" step="0.01" min="0.01" required placeholder="Ej. 5.5">
+                </div>
+
+                <div class="form-group">
+                    <label>Motivo / Justificación</label>
+                    <input type="text" id="motivo" required placeholder="Ej. Compra mercado central">
+                </div>
+
+                <input type="hidden" id="usuario" value="Admin_Turno_1">
+                
+                <button type="submit" class="btn-submit">Registrar en Kardex</button>
+            </form>
+        </div>
     </div>
 
-    <!-- Panel Derecho: Tabla de Datos -->
-    <div class="card table-section">
-        <h2>📦 Control de Inventario</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Ingrediente</th>
-                    <th>Stock Actual</th>
-                    <th>Mínimo</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="tabla-inventario">
-                <!-- Datos dinámicos -->
-            </tbody>
-        </table>
+    <!-- Columna Derecha: Vista de Inventario -->
+    <div class="card">
+        <div class="card-header">📦 Estado Actual del Inventario</div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ingrediente</th>
+                        <th>Stock Actual</th>
+                        <th>Alerta</th>
+                        <th>Valorizado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-inventario">
+                    <!-- Se llena con JS -->
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
-    const API_URL = 'http://127.0.0.1:8000/api/inventario';
-    let editandoId = null; // Variable para saber si estamos creando o editando
+    const API_URL = 'http://127.0.0.1:8000/api';
+    const loader = document.getElementById('loading');
 
-    // 1. Cargar y mostrar datos (READ)
-    async function cargarInventario() {
+    // Muestra u oculta la pantalla de carga
+    const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
+
+    // 1. Cargar el Reporte de Valorización y llenar la tabla
+    async function cargarDashboard() {
         try {
-            const respuesta = await fetch(API_URL);
-            const json = await respuesta.json();
+            // Asumimos que has actualizado el endpoint para traer todo el inventario con su costo
+            const res = await fetch(`${API_URL}/reportes/valorizacion`);
+            const data = await res.json();
+            
+            // Actualizar Widget
+            document.getElementById('capital-total').innerText = `S/ ${data.capital_total_almacen.toFixed(2)}`;
+
+            // Llenar Tabla y Select
             const tbody = document.getElementById('tabla-inventario');
-            tbody.innerHTML = ''; 
+            const select = document.getElementById('id_inventario');
+            tbody.innerHTML = '';
+            select.innerHTML = '<option value="">Seleccione un insumo...</option>';
 
-            json.data.forEach(item => {
-                const tr = document.createElement('tr');
+            // Hacemos un fetch adicional para traer los items con su stock mínimo (Endpoint de inventario clásico)
+            const resInv = await fetch(`${API_URL}/inventario`);
+            const inventarioData = await resInv.json();
+
+            inventarioData.data.forEach(item => {
+                // Llenar Select del Kardex
+                select.innerHTML += `<option value="${item.id}">${item.ingrediente} (${item.unidad})</option>`;
+
+                // Calcular estado
                 const estadoHtml = item.alerta_compra 
-                    ? `<span class="alert-badge">⚠️ Comprar</span>` 
-                    : `<span class="ok-badge">✓ OK</span>`;
+                    ? `<span class="badge badge-danger">Crítico (${item.stock_minimo} min)</span>` 
+                    : `<span class="badge badge-success">Óptimo</span>`;
 
-                // Convertir el objeto item a string para pasarlo a la función de edición
-                const itemData = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+                // Calcular valorizado por item (Si no existe costo, se asume 0 para la demo)
+                const costoUnit = item.costo_unitario || 0;
+                const valorizado = (item.cantidad_actual * costoUnit).toFixed(2);
 
-                tr.innerHTML = `
-                    <td><strong>${item.ingrediente}</strong></td>
-                    <td>${item.cantidad_actual} ${item.unidad}</td>
-                    <td>${item.stock_minimo}</td>
-                    <td>${estadoHtml}</td>
-                    <td>
-                        <button class="btn-sm btn-edit" onclick="prepararEdicion('${itemData}')">✏️</button>
-                        <button class="btn-sm btn-delete" onclick="eliminarItem(${item.id})">🗑️</button>
-                    </td>
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.ingrediente}</strong></td>
+                        <td>${item.cantidad_actual} ${item.unidad}</td>
+                        <td>${estadoHtml}</td>
+                        <td>S/ ${valorizado}</td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error cargando el dashboard:', error);
         }
     }
 
-    // 2. Guardar (CREATE o UPDATE)
-    document.getElementById('itemForm').addEventListener('submit', async (e) => {
+    // 2. Registrar Movimiento
+    document.getElementById('formMovimiento').addEventListener('submit', async (e) => {
         e.preventDefault();
+        toggleLoader(true);
         
         const payload = {
-            ingrediente: document.getElementById('ingrediente').value,
-            unidad: document.getElementById('unidad').value,
-            cantidad_actual: parseFloat(document.getElementById('cantidad').value),
-            stock_minimo: parseFloat(document.getElementById('minimo').value)
+            id_inventario: parseInt(document.getElementById('id_inventario').value),
+            tipo: document.getElementById('tipo').value,
+            cantidad: parseFloat(document.getElementById('cantidad').value),
+            motivo: document.getElementById('motivo').value,
+            usuario: document.getElementById('usuario').value
         };
 
-        const metodo = editandoId ? 'PUT' : 'POST';
-        const url = editandoId ? `${API_URL}/${editandoId}` : API_URL;
-
         try {
-            await fetch(url, {
-                method: metodo,
+            const response = await fetch(`${API_URL}/movimientos`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             
-            limpiarFormulario();
-            cargarInventario(); // Recargar tabla
+            if(response.ok) {
+                document.getElementById('formMovimiento').reset();
+                await cargarDashboard(); // Refrescar los datos
+                alert("✅ Movimiento registrado exitosamente en el Kardex.");
+            } else {
+                alert("❌ Error al registrar el movimiento.");
+            }
         } catch (error) {
-            console.error('Error al guardar:', error);
+            console.error('Error:', error);
+        } finally {
+            toggleLoader(false);
         }
     });
 
-    // 3. Preparar el formulario para editar (UPDATE)
-    function prepararEdicion(itemString) {
-        const item = JSON.parse(itemString);
-        editandoId = item.id;
-        
-        document.getElementById('form-title').innerText = "✏️ Editar Insumo";
-        document.getElementById('ingrediente').value = item.ingrediente;
-        document.getElementById('unidad').value = item.unidad;
-        document.getElementById('cantidad').value = item.cantidad_actual;
-        document.getElementById('minimo').value = item.stock_minimo;
-        
-        document.getElementById('btn-save').innerText = "Actualizar Insumo";
-        document.getElementById('btn-cancel').style.display = "block";
-    }
-
-    // 4. Eliminar (DELETE)
-    async function eliminarItem(id) {
-        if(confirm("¿Estás seguro de eliminar este insumo?")) {
-            try {
-                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                cargarInventario();
-            } catch (error) {
-                console.error('Error al eliminar:', error);
+    // 3. Generar y Enviar Alerta por WhatsApp
+    async function enviarAlertaWhatsApp() {
+        toggleLoader(true);
+        try {
+            const res = await fetch(`${API_URL}/alertas/compras`);
+            const data = await res.json();
+            
+            if(data.mensaje_generado.includes("Todo en orden")) {
+                alert("✅ Todo en orden, no hay insumos por debajo del stock mínimo.");
+                toggleLoader(false);
+                return;
             }
+
+            // Aquí es donde brilla tu experiencia:
+            // En producción, en lugar de abrir la ventana web, aquí harías un 
+            // fetch POST a tu instancia de Evolution API para enviar el mensaje silenciosamente.
+            
+            /* EJEMPLO PARA EVOLUTION API:
+            await fetch('TU_URL_EVOLUTION_API/message/sendText/TU_INSTANCIA', {
+                method: 'POST',
+                headers: { 'apikey': 'TU_API_KEY', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: "51999999999", text: data.mensaje_generado })
+            });
+            */
+
+            // Para la demo, abrimos WhatsApp Web:
+            const numeroDueño = "51999999999"; // Cambiar al número de prueba
+            const url = `https://wa.me/${numeroDueño}?text=${encodeURIComponent(data.mensaje_generado)}`;
+            window.open(url, '_blank');
+            
+        } catch (error) {
+            alert("Error conectando con el servidor para generar la lista.");
+        } finally {
+            toggleLoader(false);
         }
     }
 
-    // Cancelar edición y limpiar
-    document.getElementById('btn-cancel').addEventListener('click', limpiarFormulario);
-
-    function limpiarFormulario() {
-        editandoId = null;
-        document.getElementById('itemForm').reset();
-        document.getElementById('form-title').innerText = "➕ Nuevo Insumo";
-        document.getElementById('btn-save').innerText = "Guardar Insumo";
-        document.getElementById('btn-cancel').style.display = "none";
-    }
-
     // Inicializar
-    cargarInventario();
+    cargarDashboard();
 </script>
 
 </body>
