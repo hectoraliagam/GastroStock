@@ -19,15 +19,39 @@ body {
     color: var(--text-main); 
 }
 
-/* Control de Vistas (Login vs Dashboard) */
+/* ==========================================
+    TIPOGRAFÍA Y ENCABEZADOS
+   ========================================== */
+h1, h2, h3 {
+    margin-top: 0;
+    color: var(--text-main);
+}
+
+.title-primary {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ==========================================
+    CONTROL DE VISTAS (LOGIN)
+   ========================================== */
 .dashboard-container { display: none; }
-.login-container { display: flex; height: 100vh; align-items: center; justify-content: center; background-color: var(--bg-main); }
-.login-box { background: var(--bg-card); padding: 40px; border-radius: 8px; border: 1px solid var(--border); width: 100%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-.login-box h2 { color: var(--primary); margin-top: 0; margin-bottom: 5px; font-size: 1.8rem; }
+.login-container { 
+    display: flex; height: 100vh; align-items: center; 
+    justify-content: center; background-color: var(--bg-main); 
+}
+.login-box { 
+    background: var(--bg-card); padding: 40px; border-radius: 8px; 
+    border: 1px solid var(--border); width: 100%; max-width: 350px; 
+    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+}
+.login-box h2 { color: var(--primary); margin-bottom: 5px; font-size: 1.8rem; }
 .login-box p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
 .login-box input { margin-bottom: 15px; }
 
-/* Navbar */
+/* ==========================================
+    NAVEGACIÓN (NAVBAR)
+   ========================================== */
 .navbar { 
     background-color: var(--bg-card); 
     border-bottom: 1px solid var(--border);
@@ -39,155 +63,193 @@ body {
     top: 0;
     z-index: 100;
 }
-
-.navbar h1 { 
-    margin: 0; 
-    font-size: 1.4rem; 
-    letter-spacing: 1px;
-    font-weight: 600;
-    color: var(--primary);
-}
-
+.navbar h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; color: var(--primary); }
 .nav-actions { display: flex; gap: 15px; align-items: center; }
 
-.btn-whatsapp { 
-    background-color: transparent; 
-    color: var(--success); 
-    border: 1px solid var(--success); 
-    padding: 8px 16px; 
-    border-radius: 4px; 
-    font-weight: 500; 
-    cursor: pointer; 
-    display: flex; 
-    align-items: center; 
-    gap: 8px; 
-    transition: all 0.3s ease; 
-}
-.btn-whatsapp:hover { background-color: var(--success); color: #ffffff; }
-
-.btn-logout { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: color 0.2s; }
-.btn-logout:hover { color: var(--danger); }
-
-/* Layout Container */
-.container { 
-    max-width: 1200px; 
-    margin: 30px auto; 
-    padding: 0 20px; 
-    display: flex;
-    flex-wrap: wrap;
-    gap: 25px; 
-}
-
-.col-left { flex: 1; min-width: 300px; }
-.col-right { flex: 2; min-width: 300px; }
-
-/* Cards & Widgets */
-.card { 
-    background: var(--bg-card); 
-    padding: 25px; 
-    border-radius: 8px; 
-    border: 1px solid var(--border);
-}
-
-.card-header { 
-    font-size: 1.1rem; 
-    font-weight: 500; 
-    margin-bottom: 20px; 
-    border-bottom: 1px solid var(--border); 
-    padding-bottom: 12px; 
-    color: var(--text-main); 
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.widget-dinero { 
-    background: #18181b; 
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--primary);
-    color: var(--text-main); 
-    padding: 25px; 
-    border-radius: 8px; 
-    margin-bottom: 25px; 
-}
-
-.widget-dinero h3 { margin: 0 0 8px 0; font-size: 0.85rem; font-weight: 500; text-transform: uppercase; color: var(--text-muted); }
-.widget-dinero .monto { font-size: 2.2rem; font-weight: 300; margin: 0; color: var(--primary); }
-
-/* Forms */
-.form-group { margin-bottom: 18px; }
-label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
-input, select { 
-    width: 100%; padding: 12px; background-color: var(--bg-input); color: var(--text-main);
-    border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
-}
-input:focus, select:focus { border-color: var(--primary); }
-
+/* ==========================================
+    BOTONES
+   ========================================== */
 .btn-submit { 
-    background-color: var(--primary); color: var(--bg-main); border: none; padding: 14px; border-radius: 4px; 
-    font-weight: 600; width: 100%; cursor: pointer; margin-top: 10px; transition: background-color 0.2s; text-transform: uppercase; letter-spacing: 0.5px;
+    background-color: var(--primary); color: var(--bg-main); 
+    border: none; padding: 12px 20px; border-radius: 4px; 
+    font-weight: 600; cursor: pointer; transition: background-color 0.2s; 
+    text-transform: uppercase; letter-spacing: 0.5px;
+    width: 100%; /* Por defecto ocupan todo el ancho, útil en formularios */
 }
 .btn-submit:hover { background-color: var(--primary-hover); }
 
-/* Table */
+.btn-cancel { 
+    background-color: transparent; color: var(--text-main); 
+    border: 1px solid var(--border); padding: 12px 20px; 
+    border-radius: 4px; cursor: pointer; transition: 0.2s; 
+    font-weight: 600; font-size: 0.85rem; text-transform: uppercase;
+}
+.btn-cancel:hover { background-color: var(--border); }
+
+.btn-whatsapp { 
+    background-color: transparent; color: var(--success); 
+    border: 1px solid var(--success); padding: 8px 16px; 
+    border-radius: 4px; font-weight: 500; cursor: pointer; 
+    display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; 
+}
+.btn-whatsapp:hover { background-color: var(--success); color: #ffffff; }
+
+.btn-logout { 
+    background: none; border: none; color: var(--text-muted); 
+    cursor: pointer; font-size: 0.9rem; transition: color 0.2s; 
+}
+.btn-logout:hover { color: var(--danger); }
+
+/* Botones de acción en tablas (Editar/Eliminar) */
+.btn-action { 
+    background: transparent; border: 1px solid var(--border); 
+    color: var(--text-muted); padding: 6px 12px; border-radius: 4px; 
+    cursor: pointer; font-size: 0.8rem; margin-right: 5px; transition: 0.2s; 
+}
+.btn-action:hover { color: var(--text-main); border-color: var(--text-main); }
+.btn-action.edit:hover { background-color: var(--primary); color: #000; border-color: var(--primary); }
+.btn-action.delete:hover { background-color: var(--danger); color: #fff; border-color: var(--danger); }
+
+/* ==========================================
+    ESTRUCTURA PRINCIPAL (LAYOUT)
+   ========================================== */
+.container { 
+    max-width: 1200px; margin: 30px auto; padding: 0 20px; 
+    display: flex; flex-wrap: wrap; gap: 25px; 
+}
+.col-left { flex: 1; min-width: 300px; }
+.col-right { flex: 2; min-width: 300px; }
+
+/* ==========================================
+    TARJETAS Y WIDGETS
+   ========================================== */
+.card { 
+    background: var(--bg-card); padding: 25px; 
+    border-radius: 8px; border: 1px solid var(--border);
+}
+.card-header { 
+    font-size: 1.1rem; font-weight: 500; margin-bottom: 20px; 
+    border-bottom: 1px solid var(--border); padding-bottom: 12px; 
+    color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.widget-dinero { 
+    background: #18181b; border: 1px solid var(--border);
+    border-left: 4px solid var(--primary); color: var(--text-main); 
+    padding: 25px; border-radius: 8px; margin-bottom: 25px; 
+}
+.widget-dinero h3 { font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+.widget-dinero .monto { font-size: 2.2rem; font-weight: 300; margin: 0; color: var(--primary); }
+
+/* ==========================================
+   FORMULARIOS
+   ========================================== */
+.form-group { margin-bottom: 18px; }
+label { 
+    display: block; margin-bottom: 8px; font-size: 0.85rem; 
+    font-weight: 500; color: var(--text-muted); text-transform: uppercase; 
+}
+input, select { 
+    width: 100%; padding: 12px; background-color: var(--bg-input); 
+    color: var(--text-main); border: 1px solid var(--border); 
+    border-radius: 4px; box-sizing: border-box; font-size: 0.95rem; 
+    outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: var(--primary); }
+
+/* Formularios dentro de Modales (CRUD) */
+.crud-form { 
+    background: #18181b; padding: 20px; border-radius: 6px; 
+    margin-bottom: 10px; border: 1px solid var(--border); 
+}
+.crud-form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+.form-group-crud { display: flex; flex-direction: column; }
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.form-group-crud label { font-size: 0.75rem; }
+.crud-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.crud-form-actions .btn-submit { width: auto; } /* El botón submit en CRUD no ocupa todo el ancho */
+
+/* ==========================================
+    TABLAS
+   ========================================== */
 .table-responsive { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 500px; }
 th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid var(--border); }
 th { font-weight: 500; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
 tr:hover { background-color: #242424; }
 
+/* Listado con Scroll (Para CRUD) */
+.listado-insumos { 
+    overflow-y: auto; margin-top: 10px; 
+    border: 1px solid var(--border); border-radius: 6px; 
+    flex-grow: 1; min-height: 150px;
+}
+
+/* ==========================================
+    ETIQUETAS (BADGES)
+   ========================================== */
 .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
 .badge-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
 .badge-success { background-color: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
 
-/* Loader overlay */
+/* ==========================================
+    MODALES (VENTANAS EMERGENTES)
+   ========================================== */
+.modal { 
+    display: none; position: fixed; z-index: 1500; left: 0; top: 0; 
+    width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); 
+    align-items: center; justify-content: center;
+    padding: 20px; box-sizing: border-box;
+}
+.modal-content { 
+    background-color: var(--bg-card); padding: 30px; border-radius: 8px; 
+    border: 1px solid var(--border); width: 100%; max-width: 400px; 
+    text-align: center; position: relative; 
+    max-height: 90vh; display: flex; flex-direction: column;
+}
+.crud-modal-content { max-width: 650px; text-align: left; }
+.crud-modal-content h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem;}
+
+.close-btn { 
+    color: var(--text-muted); position: absolute; top: 10px; right: 15px; 
+    font-size: 28px; font-weight: bold; cursor: pointer; 
+}
+.close-btn:hover { color: var(--text-main); }
+
+/* ==========================================
+    FEEDBACK VISUAL (LOADER Y TOASTS)
+   ========================================== */
 .loading-overlay { 
     display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    background: rgba(18, 18, 18, 0.9); align-items: center; justify-content: center; flex-direction: column; z-index: 1000; color: var(--primary); 
+    background: rgba(18, 18, 18, 0.9); align-items: center; justify-content: center; 
+    flex-direction: column; z-index: 2000; color: var(--primary); 
 }
 .spinner {
-    border: 4px solid rgba(212, 175, 55, 0.3); border-top: 4px solid var(--primary); border-radius: 50%;
-    width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px;
+    border: 4px solid rgba(212, 175, 55, 0.3); border-top: 4px solid var(--primary); 
+    border-radius: 50%; width: 40px; height: 40px; 
+    animation: spin 1s linear infinite; margin-bottom: 15px;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-/* Toast Notifications */
-.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2500; display: flex; flex-direction: column; gap: 10px; }
 .toast {
-    background-color: var(--bg-card); color: var(--text-main); padding: 15px 20px; border-radius: 6px;
-    border-left: 4px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 250px;
-    transform: translateX(120%); transition: transform 0.3s ease-out; display: flex; align-items: center; gap: 10px;
+    background-color: var(--bg-card); color: var(--text-main); padding: 15px 20px; 
+    border-radius: 6px; border-left: 4px solid var(--primary); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); min-width: 250px;
+    transform: translateX(120%); transition: transform 0.3s ease-out; 
+    display: flex; align-items: center; gap: 10px;
 }
 .toast.show { transform: translateX(0); }
 .toast.success { border-color: var(--success); }
 .toast.error { border-color: var(--danger); }
 
-/* Modal */
-.modal { display: none; position: fixed; z-index: 1500; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); align-items: center; justify-content: center; }
-.modal-content { background-color: var(--bg-card); padding: 30px; border-radius: 8px; border: 1px solid var(--border); width: 90%; max-width: 400px; text-align: center; position: relative; }
-.close-btn { color: var(--text-muted); position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
-.close-btn:hover { color: var(--text-main); }
-.modal-icon { font-size: 3rem; margin-bottom: 15px; }
-
-/* Estilos para el Modal CRUD */
-.crud-modal-content { max-width: 650px; text-align: left; }
-.crud-modal-content h2 { color: var(--primary); margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-.crud-form { background: #18181b; padding: 20px; border-radius: 6px; margin-bottom: 25px; border: 1px solid var(--border); }
-.crud-form-row { display: flex; gap: 15px; margin-bottom: 15px; }
-.form-group-crud { display: flex; flex-direction: column; }
-.flex-1 { flex: 1; }
-.flex-2 { flex: 2; }
-.crud-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-.btn-cancel { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 12px 20px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-weight: 600; }
-.btn-cancel:hover { background-color: var(--border); }
-.listado-insumos { max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
-.btn-action { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; transition: 0.2s; }
-.btn-action.edit:hover { background-color: var(--primary); color: #000; border-color: var(--primary); }
-.btn-action.delete:hover { background-color: var(--danger); color: #fff; border-color: var(--danger); }
-
-/* Responsive adjustments */
+/* ==========================================
+    RESPONSIVO
+   ========================================== */
 @media (max-width: 768px) {
     .navbar h1 { font-size: 1.2rem; }
     .btn-whatsapp { padding: 6px 12px; font-size: 0.9rem; }
     .container { flex-direction: column; }
     .col-left, .col-right { width: 100%; }
+    .crud-form-row { flex-direction: column; gap: 10px;}
 }

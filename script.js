@@ -1,5 +1,5 @@
-// const API_URL = 'http://127.0.0.1:8000/api';
-const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
+// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 const loader = document.getElementById('loading');
 const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
 
