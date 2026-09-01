@@ -3,74 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Inventario | Demo Restaurante</title>
+    <title>Panel de Inventario | SaaS Demo</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: #f8f9fa; color: #555; }
-        .alert-badge { background-color: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
-        .ok-badge { background-color: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.85em; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .dashboard { display: flex; gap: 20px; max-width: 1100px; margin: auto; flex-wrap: wrap; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .form-section { flex: 1; min-width: 300px; }
+        .table-section { flex: 2; min-width: 500px; overflow-x: auto; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; font-size: 1.5em; }
+        
+        /* Formulario */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .btn-cancel { background-color: #6c757d; margin-top: 10px; display: none; }
+        
+        /* Tabla */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        .alert-badge { background-color: #dc3545; color: white; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; font-weight: bold; }
+        .ok-badge { background-color: #28a745; color: white; padding: 5px 8px; border-radius: 4px; font-size: 0.85em; }
+        
+        /* Botones de acción en tabla */
+        .btn-sm { padding: 6px 10px; width: auto; font-size: 0.85em; margin-right: 5px; }
+        .btn-edit { background-color: #ffc107; color: #000; }
+        .btn-delete { background-color: #dc3545; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📦 Control de Inventario en Tiempo Real</h1>
-    <p>Revisa qué insumos necesitas comprar para el turno de hoy.</p>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Ingrediente</th>
-                <th>Stock Actual</th>
-                <th>Stock Mínimo Ideal</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-inventario">
-            <!-- Los datos se inyectarán aquí con JavaScript -->
-        </tbody>
-    </table>
+<div class="dashboard">
+    <!-- Panel Izquierdo: Formulario CRUD -->
+    <div class="card form-section">
+        <h2 id="form-title">➕ Nuevo Insumo</h2>
+        <form id="itemForm">
+            <input type="hidden" id="itemId">
+            
+            <div class="form-group">
+                <label>Ingrediente</label>
+                <input type="text" id="ingrediente" required placeholder="Ej. Tomate">
+            </div>
+            
+            <div class="form-group">
+                <label>Unidad de Medida</label>
+                <select id="unidad">
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="litros">Litros (L)</option>
+                    <option value="unidades">Unidades (und)</option>
+                    <option value="gramos">Gramos (g)</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Stock Actual</label>
+                <input type="number" id="cantidad" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Stock Mínimo (Alerta)</label>
+                <input type="number" id="minimo" step="0.01" required>
+            </div>
+            
+            <button type="submit" id="btn-save">Guardar Insumo</button>
+            <button type="button" class="btn-cancel" id="btn-cancel">Cancelar Edición</button>
+        </form>
+    </div>
+
+    <!-- Panel Derecho: Tabla de Datos -->
+    <div class="card table-section">
+        <h2>📦 Control de Inventario</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Ingrediente</th>
+                    <th>Stock Actual</th>
+                    <th>Mínimo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-inventario">
+                <!-- Datos dinámicos -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // URL de tu API en FastAPI
     const API_URL = 'http://127.0.0.1:8000/api/inventario';
+    let editandoId = null; // Variable para saber si estamos creando o editando
 
+    // 1. Cargar y mostrar datos (READ)
     async function cargarInventario() {
         try {
             const respuesta = await fetch(API_URL);
             const json = await respuesta.json();
-            
             const tbody = document.getElementById('tabla-inventario');
-            tbody.innerHTML = ''; // Limpiar tabla
+            tbody.innerHTML = ''; 
 
             json.data.forEach(item => {
                 const tr = document.createElement('tr');
-                
-                // Si la cantidad es menor al mínimo, mostramos alerta visual
                 const estadoHtml = item.alerta_compra 
-                    ? `<span class="alert-badge">⚠️ Comprar urgente</span>` 
-                    : `<span class="ok-badge">✓ Stock OK</span>`;
+                    ? `<span class="alert-badge">⚠️ Comprar</span>` 
+                    : `<span class="ok-badge">✓ OK</span>`;
+
+                // Convertir el objeto item a string para pasarlo a la función de edición
+                const itemData = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
                 tr.innerHTML = `
                     <td><strong>${item.ingrediente}</strong></td>
                     <td>${item.cantidad_actual} ${item.unidad}</td>
-                    <td>${item.stock_minimo} ${item.unidad}</td>
+                    <td>${item.stock_minimo}</td>
                     <td>${estadoHtml}</td>
+                    <td>
+                        <button class="btn-sm btn-edit" onclick="prepararEdicion('${itemData}')">✏️</button>
+                        <button class="btn-sm btn-delete" onclick="eliminarItem(${item.id})">🗑️</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
         } catch (error) {
-            console.error('Error al cargar el inventario:', error);
-            document.getElementById('tabla-inventario').innerHTML = '<tr><td colspan="4">Error al conectar con la base de datos.</td></tr>';
+            console.error('Error:', error);
         }
     }
 
-    // Cargar datos al iniciar
+    // 2. Guardar (CREATE o UPDATE)
+    document.getElementById('itemForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const payload = {
+            ingrediente: document.getElementById('ingrediente').value,
+            unidad: document.getElementById('unidad').value,
+            cantidad_actual: parseFloat(document.getElementById('cantidad').value),
+            stock_minimo: parseFloat(document.getElementById('minimo').value)
+        };
+
+        const metodo = editandoId ? 'PUT' : 'POST';
+        const url = editandoId ? `${API_URL}/${editandoId}` : API_URL;
+
+        try {
+            await fetch(url, {
+                method: metodo,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            limpiarFormulario();
+            cargarInventario(); // Recargar tabla
+        } catch (error) {
+            console.error('Error al guardar:', error);
+        }
+    });
+
+    // 3. Preparar el formulario para editar (UPDATE)
+    function prepararEdicion(itemString) {
+        const item = JSON.parse(itemString);
+        editandoId = item.id;
+        
+        document.getElementById('form-title').innerText = "✏️ Editar Insumo";
+        document.getElementById('ingrediente').value = item.ingrediente;
+        document.getElementById('unidad').value = item.unidad;
+        document.getElementById('cantidad').value = item.cantidad_actual;
+        document.getElementById('minimo').value = item.stock_minimo;
+        
+        document.getElementById('btn-save').innerText = "Actualizar Insumo";
+        document.getElementById('btn-cancel').style.display = "block";
+    }
+
+    // 4. Eliminar (DELETE)
+    async function eliminarItem(id) {
+        if(confirm("¿Estás seguro de eliminar este insumo?")) {
+            try {
+                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+                cargarInventario();
+            } catch (error) {
+                console.error('Error al eliminar:', error);
+            }
+        }
+    }
+
+    // Cancelar edición y limpiar
+    document.getElementById('btn-cancel').addEventListener('click', limpiarFormulario);
+
+    function limpiarFormulario() {
+        editandoId = null;
+        document.getElementById('itemForm').reset();
+        document.getElementById('form-title').innerText = "➕ Nuevo Insumo";
+        document.getElementById('btn-save').innerText = "Guardar Insumo";
+        document.getElementById('btn-cancel').style.display = "none";
+    }
+
+    // Inicializar
     cargarInventario();
 </script>
 
