@@ -1,26 +1,19 @@
-// const API_URL = 'http://127.0.0.1:8000/api';
-const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
+// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 const loader = document.getElementById('loading');
 const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
 
 let currentUser = JSON.parse(localStorage.getItem('gastro_user'));
+let inventarioGlobal = [];
 
-// ==========================================
-// CONTROL DE SESIÓN (LOGIN / LOGOUT)
-// ==========================================
-if (currentUser) {
-    iniciarDashboard();
-}
+if (currentUser) iniciarDashboard();
 
 document.getElementById('formLogin').addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button');
     btn.innerText = 'Verificando...';
     
-    const payload = {
-        username: document.getElementById('username').value,
-        password: document.getElementById('password').value
-    };
+    const payload = { username: document.getElementById('username').value, password: document.getElementById('password').value };
 
     try {
         const res = await fetch(`${API_URL}/login`, {
@@ -39,7 +32,6 @@ document.getElementById('formLogin').addEventListener('submit', async (e) => {
             showToast("Usuario o contraseña incorrectos", "error");
         }
     } catch (error) {
-        console.error(error);
         showToast("Error conectando al servidor", "error");
     } finally {
         btn.innerText = 'Ingresar';
@@ -58,23 +50,18 @@ function iniciarDashboard() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-dashboard').style.display = 'block';
     
-    // Control de Roles
     if (currentUser.rol === 'empleado') {
-        // Ocultar el widget de dinero
         document.getElementById('widget-capital').style.display = 'none';
-        // Ocultar la columna de valorización en la tabla
         document.querySelector('.col-valorizacion').style.display = 'none';
+        document.getElementById('btn-crud-insumos').style.display = 'none';
     } else {
         document.getElementById('widget-capital').style.display = 'block';
         document.querySelector('.col-valorizacion').style.display = 'table-cell';
+        document.getElementById('btn-crud-insumos').style.display = 'flex';
     }
-    
     cargarDashboard();
 }
 
-// ==========================================
-// FUNCIONES DEL DASHBOARD
-// ==========================================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -83,35 +70,21 @@ function showToast(message, type = 'success') {
     toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 100);
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3500);
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
 }
 
-function mostrarModalProximaAct() {
-    document.getElementById('modal-update').style.display = 'flex';
-}
-function cerrarModal() {
-    document.getElementById('modal-update').style.display = 'none';
-}
-window.onclick = function(event) {
-    const modal = document.getElementById('modal-update');
-    if (event.target == modal) {
-        modal.style.display = "none";
-    }
-}
+function mostrarModalProximaAct() { document.getElementById('modal-update').style.display = 'flex'; }
+function cerrarModal() { document.getElementById('modal-update').style.display = 'none'; }
+function abrirCrud() { document.getElementById('modal-crud').style.display = 'flex'; renderizarTablaCrud(); }
+function cerrarCrud() { document.getElementById('modal-crud').style.display = 'none'; }
 
 async function cargarDashboard() {
     if (!currentUser) return;
-    
     try {
-        // 1. Cargar Valorización (Usando el id_restaurante del usuario actual)
         const res = await fetch(`${API_URL}/reportes/valorizacion/${currentUser.id_restaurante}`);
         const data = await res.json();
         document.getElementById('capital-total').innerText = `S/ ${data.capital_total_almacen.toFixed(2)}`;
 
-        // 2. Cargar Inventario (Usando el id_restaurante del usuario actual)
         const tbody = document.getElementById('tabla-inventario');
         const select = document.getElementById('id_inventario');
         tbody.innerHTML = '';
@@ -119,18 +92,13 @@ async function cargarDashboard() {
 
         const resInv = await fetch(`${API_URL}/inventario/${currentUser.id_restaurante}`);
         const inventarioData = await resInv.json();
+        inventarioGlobal = inventarioData.data;
 
-        inventarioData.data.forEach(item => {
+        inventarioGlobal.forEach(item => {
             select.innerHTML += `<option value="${item.id}">${item.ingrediente} (${item.unidad})</option>`;
-
-            const estadoHtml = item.alerta_compra 
-                ? `<span class="badge badge-danger">Crítico</span>` 
-                : `<span class="badge badge-success">Óptimo</span>`;
-
+            const estadoHtml = item.alerta_compra ? `<span class="badge badge-danger">Crítico</span>` : `<span class="badge badge-success">Óptimo</span>`;
             const costoUnit = item.costo_unitario || 0;
             const valorizado = (item.cantidad_actual * costoUnit).toFixed(2);
-
-            // Si es empleado, no generamos la celda de valorizado
             const valorizadoCelda = currentUser.rol === 'empleado' ? '' : `<td>S/ ${valorizado}</td>`;
 
             tbody.innerHTML += `
@@ -139,25 +107,22 @@ async function cargarDashboard() {
                     <td>${item.cantidad_actual} ${item.unidad}</td>
                     <td>${estadoHtml}</td>
                     ${valorizadoCelda}
-                </tr>
-            `;
+                </tr>`;
         });
     } catch (error) {
-        console.error(error);
-        showToast("Error cargando los datos del servidor", "error");
+        showToast("Error cargando los datos", "error");
     }
 }
 
 document.getElementById('formMovimiento').addEventListener('submit', async (e) => {
     e.preventDefault();
     toggleLoader(true);
-
     const payload = {
         id_inventario: parseInt(document.getElementById('id_inventario').value),
         tipo: document.getElementById('tipo').value,
         cantidad: parseFloat(document.getElementById('cantidad').value),
         motivo: document.getElementById('motivo').value,
-        usuario: currentUser.username // Enviar el usuario que inició sesión
+        usuario: currentUser.username
     };
 
     try {
@@ -166,21 +131,69 @@ document.getElementById('formMovimiento').addEventListener('submit', async (e) =
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-
         if(response.ok) {
             document.getElementById('formMovimiento').reset();
             await cargarDashboard();
-            showToast("Operación registrada exitosamente", "success");
-        } else {
-            showToast("Error interno al procesar la transacción", "error");
-        }
-    } catch (error) {
-        console.error(error);
-        showToast("Fallo de conexión al intentar guardar", "error");
-    } finally {
-        toggleLoader(false);
-    }
+            showToast("Movimiento registrado", "success");
+        } else { showToast("Error en la transacción", "error"); }
+    } catch (error) { showToast("Fallo de conexión", "error"); } 
+    finally { toggleLoader(false); }
 });
+
+function renderizarTablaCrud() {
+    const tbody = document.getElementById('tabla-crud-insumos');
+    tbody.innerHTML = '';
+    inventarioGlobal.forEach(item => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${item.ingrediente} <small style="color:var(--text-muted)">(${item.unidad})</small></td>
+                <td>S/ ${item.costo_unitario}</td>
+                <td>
+                    <button onclick="eliminarInsumo(${item.id})" style="background:var(--danger); border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">🗑️</button>
+                </td>
+            </tr>`;
+    });
+}
+
+document.getElementById('formCrearInsumo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoader(true);
+    const payload = {
+        ingrediente: document.getElementById('nuevo-nombre').value,
+        unidad: document.getElementById('nuevo-unidad').value,
+        stock_minimo: parseFloat(document.getElementById('nuevo-minimo').value),
+        costo_unitario: parseFloat(document.getElementById('nuevo-costo').value)
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/inventario/${currentUser.id_restaurante}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if(response.ok) {
+            document.getElementById('formCrearInsumo').reset();
+            await cargarDashboard();
+            renderizarTablaCrud();
+            showToast("Insumo agregado", "success");
+        } else { showToast("Error al crear", "error"); }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
+});
+
+async function eliminarInsumo(id_insumo) {
+    if(!confirm("¿Seguro que deseas eliminar este insumo?")) return;
+    toggleLoader(true);
+    try {
+        const response = await fetch(`${API_URL}/inventario/${currentUser.id_restaurante}/${id_insumo}`, { method: 'DELETE' });
+        if(response.ok) {
+            await cargarDashboard();
+            renderizarTablaCrud();
+            showToast("Insumo eliminado", "success");
+        } else { showToast("No se puede eliminar porque tiene movimientos guardados.", "error"); }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
+}
 
 async function enviarAlertaWhatsApp() {
     // La lógica de Evolution API se implementará en la próxima actualización
