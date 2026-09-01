@@ -1,11 +1,34 @@
-// MODO DESARROLLO (Local)
-// const API_URL = 'http://127.0.0.1:8000/api';
-
-// MODO PRODUCCIÓN (Nube)
 const API_URL = 'https://gastrostock-27s9.onrender.com/api';
-
 const loader = document.getElementById('loading');
 const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    const icon = type === 'success' ? '✅' : '❌';
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3500);
+}
+
+function mostrarModalProximaAct() {
+    document.getElementById('modal-update').style.display = 'flex';
+}
+function cerrarModal() {
+    document.getElementById('modal-update').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-update');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
 
 async function cargarDashboard() {
     try {
@@ -42,7 +65,7 @@ async function cargarDashboard() {
         });
     } catch (error) {
         console.error(error);
-        alert("No se pudo conectar con el servidor. Verifica que el backend esté corriendo.");
+        showToast("Error de conexión con el servidor", "error");
     }
 }
 
@@ -68,60 +91,21 @@ document.getElementById('formMovimiento').addEventListener('submit', async (e) =
         if(response.ok) {
             document.getElementById('formMovimiento').reset();
             await cargarDashboard();
-            alert("Operación registrada exitosamente en el sistema.");
+            showToast("Operación registrada exitosamente", "success");
         } else {
-            alert("Error interno al procesar la transacción.");
+            showToast("Error interno al procesar la transacción", "error");
         }
     } catch (error) {
         console.error(error);
-        alert("Fallo de conexión al intentar guardar.");
+        showToast("Fallo de conexión al intentar guardar", "error");
     } finally {
         toggleLoader(false);
     }
 });
 
+// Función de WhatsApp desactivada temporalmente, reemplazada por el modal en HTML
 async function enviarAlertaWhatsApp() {
-    toggleLoader(true);
-    try {
-        const res = await fetch(`${API_URL}/alertas/compras`);
-        const data = await res.json();
-        
-        if(data.mensaje_generado.includes("Todo en orden")) {
-            alert("El inventario se encuentra en niveles óptimos.");
-            toggleLoader(false);
-            return;
-        }
-
-        const EVOLUTION_URL = "https://tu-dominio-evolution.com"; 
-        const INSTANCE_NAME = "nombre_de_tu_instancia"; 
-        const API_KEY = "TU_GLOBAL_API_KEY_AQUI"; 
-        const NUMERO_GERENTE = "51982887891";
-
-        const responseWsp = await fetch(`${EVOLUTION_URL}/message/sendText/${INSTANCE_NAME}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': API_KEY
-            },
-            body: JSON.stringify({
-                number: NUMERO_GERENTE,
-                text: data.mensaje_generado
-            })
-        });
-
-        if (responseWsp.ok) {
-            alert("Reporte enviado exitosamente al dispositivo de Gerencia.");
-        } else {
-            console.error(await responseWsp.text());
-            alert("Fallo de comunicación con la pasarela de mensajería.");
-        }
-
-    } catch (error) {
-        console.error(error);
-        alert("Fallo de conexión con el servidor interno al generar la alerta.");
-    } finally {
-        toggleLoader(false);
-    }
+    // La lógica de Evolution API se implementará en la próxima actualización
 }
 
 cargarDashboard();
