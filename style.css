@@ -19,6 +19,14 @@ body {
     color: var(--text-main); 
 }
 
+/* Control de Vistas (Login vs Dashboard) */
+.dashboard-container { display: none; }
+.login-container { display: flex; height: 100vh; align-items: center; justify-content: center; background-color: var(--bg-main); }
+.login-box { background: var(--bg-card); padding: 40px; border-radius: 8px; border: 1px solid var(--border); width: 100%; max-width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+.login-box h2 { color: var(--primary); margin-top: 0; margin-bottom: 5px; font-size: 1.8rem; }
+.login-box p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
+.login-box input { margin-bottom: 15px; }
+
 /* Navbar */
 .navbar { 
     background-color: var(--bg-card); 
@@ -40,6 +48,8 @@ body {
     color: var(--primary);
 }
 
+.nav-actions { display: flex; gap: 15px; align-items: center; }
+
 .btn-whatsapp { 
     background-color: transparent; 
     color: var(--success); 
@@ -53,11 +63,10 @@ body {
     gap: 8px; 
     transition: all 0.3s ease; 
 }
+.btn-whatsapp:hover { background-color: var(--success); color: #ffffff; }
 
-.btn-whatsapp:hover { 
-    background-color: var(--success); 
-    color: #ffffff;
-}
+.btn-logout { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; transition: color 0.2s; }
+.btn-logout:hover { color: var(--danger); }
 
 /* Layout Container */
 .container { 

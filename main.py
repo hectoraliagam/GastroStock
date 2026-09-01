@@ -22,6 +22,10 @@ def get_db_connection():
         port=os.getenv("DB_PORT", 3306)
     )
 
+class LoginData(BaseModel):
+    username: str
+    password: str
+
 class Movimiento(BaseModel):
     id_inventario: int
     tipo: str
@@ -29,11 +33,27 @@ class Movimiento(BaseModel):
     motivo: str
     usuario: str
 
-@app.get("/api/inventario")
-def obtener_inventario():
+@app.post("/api/login")
+def login(data: LoginData):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM inventario ORDER BY ingrediente ASC")
+    cursor.execute(
+        "SELECT id, id_restaurante, username, rol FROM usuarios WHERE username = %s AND password = %s", 
+        (data.username, data.password)
+    )
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    return {"status": "success", "user": user}
+
+@app.get("/api/inventario/{id_restaurante}")
+def obtener_inventario(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM inventario WHERE id_restaurante = %s ORDER BY ingrediente ASC", (id_restaurante,))
     items = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -63,15 +83,15 @@ def registrar_movimiento(mov: Movimiento):
         cursor.close()
         conn.close()
 
-@app.get("/api/reportes/valorizacion")
-def reporte_valorizacion():
+@app.get("/api/reportes/valorizacion/{id_restaurante}")
+def reporte_valorizacion(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT ingrediente, cantidad_actual, costo_unitario, 
                (cantidad_actual * costo_unitario) as capital_invertido 
-        FROM inventario WHERE cantidad_actual > 0
-    """)
+        FROM inventario WHERE cantidad_actual > 0 AND id_restaurante = %s
+    """, (id_restaurante,))
     items = cursor.fetchall()
     total_capital = sum(item['capital_invertido'] for item in items) # type: ignore
     cursor.close()
@@ -81,16 +101,16 @@ def reporte_valorizacion():
         "detalle": items
     }
 
-@app.get("/api/alertas/compras")
-def generar_lista_compras_whatsapp():
+@app.get("/api/alertas/compras/{id_restaurante}")
+def generar_lista_compras_whatsapp(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("""
         SELECT i.ingrediente, i.cantidad_actual, i.stock_minimo, i.unidad, p.nombre as proveedor, p.telefono
         FROM inventario i
         LEFT JOIN proveedores p ON i.id_proveedor = p.id
-        WHERE i.cantidad_actual <= i.stock_minimo
-    """)
+        WHERE i.cantidad_actual <= i.stock_minimo AND i.id_restaurante = %s
+    """, (id_restaurante,))
     faltantes = cursor.fetchall()
     cursor.close()
     conn.close()
