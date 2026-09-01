@@ -64,7 +64,6 @@ def obtener_inventario(id_restaurante: int):
         item["alerta_compra"] = float(item["cantidad_actual"]) <= float(item["stock_minimo"]) # type: ignore
     return {"status": "success", "data": items}
 
-# NUEVO: Endpoint para CREAR un insumo nuevo
 @app.post("/api/inventario/{id_restaurante}")
 def crear_insumo(id_restaurante: int, item: ItemInventario):
     conn = get_db_connection()
@@ -81,7 +80,26 @@ def crear_insumo(id_restaurante: int, item: ItemInventario):
         cursor.close()
         conn.close()
 
-# NUEVO: Endpoint para ELIMINAR un insumo
+@app.put("/api/inventario/{id_restaurante}/{id_insumo}")
+def editar_insumo(id_restaurante: int, id_insumo: int, item: ItemInventario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        sql = """
+            UPDATE inventario 
+            SET ingrediente = %s, unidad = %s, stock_minimo = %s, costo_unitario = %s 
+            WHERE id = %s AND id_restaurante = %s
+        """
+        cursor.execute(sql, (item.ingrediente, item.unidad, item.stock_minimo, item.costo_unitario, id_insumo, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": "Insumo actualizado"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.delete("/api/inventario/{id_restaurante}/{id_insumo}")
 def eliminar_insumo(id_restaurante: int, id_insumo: int):
     conn = get_db_connection()
@@ -146,12 +164,13 @@ def generar_lista_compras_whatsapp(id_restaurante: int):
     conn.close()
     if not faltantes:
         return {"mensaje_generado": "Todo en orden. No hay compras urgentes hoy."}
-    mensaje_wa = "*⚠️ ALERTA DE COMPRAS - CIERRE DE TURNO* \n\n"
+    
+    mensaje_wa = "ALERTA DE COMPRAS - CIERRE DE TURNO \n\n"
     for item in faltantes:
         comprar = item['stock_minimo'] - item['cantidad_actual'] + item['stock_minimo'] # type: ignore
         prov = item['proveedor'] or "Sin asignar" # type: ignore
         tel = item['telefono'] or "-" # type: ignore
-        mensaje_wa += f"🔸 *{item['ingrediente']}* (Stock: {item['cantidad_actual']}{item['unidad']})\n" # type: ignore
-        mensaje_wa += f"   👉 Pedir a: {prov} ({tel})\n"
-        mensaje_wa += f"   📦 Sugerido: {comprar}{item['unidad']}\n\n" # type: ignore
+        mensaje_wa += f"- {item['ingrediente']} (Stock: {item['cantidad_actual']}{item['unidad']})\n" # type: ignore
+        mensaje_wa += f"  Proveedor: {prov} ({tel})\n" # type: ignore
+        mensaje_wa += f"  Sugerido: {comprar}{item['unidad']}\n\n" # type: ignore
     return {"status": "success", "mensaje_generado": mensaje_wa}

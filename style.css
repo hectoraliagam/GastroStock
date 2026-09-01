@@ -168,6 +168,22 @@ tr:hover { background-color: #242424; }
 .close-btn:hover { color: var(--text-main); }
 .modal-icon { font-size: 3rem; margin-bottom: 15px; }
 
+/* Estilos para el Modal CRUD */
+.crud-modal-content { max-width: 650px; text-align: left; }
+.crud-modal-content h2 { color: var(--primary); margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.crud-form { background: #18181b; padding: 20px; border-radius: 6px; margin-bottom: 25px; border: 1px solid var(--border); }
+.crud-form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+.form-group-crud { display: flex; flex-direction: column; }
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.crud-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-cancel { background-color: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 12px 20px; border-radius: 4px; cursor: pointer; transition: 0.2s; font-weight: 600; }
+.btn-cancel:hover { background-color: var(--border); }
+.listado-insumos { max-height: 350px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.btn-action { background: none; border: 1px solid var(--border); color: var(--text-main); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-right: 5px; transition: 0.2s; }
+.btn-action.edit:hover { background-color: var(--primary); color: #000; border-color: var(--primary); }
+.btn-action.delete:hover { background-color: var(--danger); color: #fff; border-color: var(--danger); }
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .navbar h1 { font-size: 1.2rem; }

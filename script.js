@@ -1,5 +1,5 @@
-const API_URL = 'http://127.0.0.1:8000/api';
-// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+// const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 const loader = document.getElementById('loading');
 const toggleLoader = (show) => loader.style.display = show ? 'flex' : 'none';
 
@@ -66,8 +66,8 @@ function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    const icon = type === 'success' ? '✅' : '❌';
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    const tag = type === 'success' ? 'OK' : 'Error';
+    toast.innerHTML = `<strong>[${tag}]</strong> <span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 100);
     setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3500);
@@ -75,7 +75,11 @@ function showToast(message, type = 'success') {
 
 function mostrarModalProximaAct() { document.getElementById('modal-update').style.display = 'flex'; }
 function cerrarModal() { document.getElementById('modal-update').style.display = 'none'; }
-function abrirCrud() { document.getElementById('modal-crud').style.display = 'flex'; renderizarTablaCrud(); }
+function abrirCrud() { 
+    document.getElementById('modal-crud').style.display = 'flex'; 
+    cancelarEdicion();
+    renderizarTablaCrud(); 
+}
 function cerrarCrud() { document.getElementById('modal-crud').style.display = 'none'; }
 
 async function cargarDashboard() {
@@ -149,15 +153,39 @@ function renderizarTablaCrud() {
                 <td>${item.ingrediente} <small style="color:var(--text-muted)">(${item.unidad})</small></td>
                 <td>S/ ${item.costo_unitario}</td>
                 <td>
-                    <button onclick="eliminarInsumo(${item.id})" style="background:var(--danger); border:none; color:white; padding:4px 8px; border-radius:4px; cursor:pointer;">🗑️</button>
+                    <button class="btn-action edit" onclick="cargarEdicion(${item.id})">Editar</button>
+                    <button class="btn-action delete" onclick="eliminarInsumo(${item.id})">Eliminar</button>
                 </td>
             </tr>`;
     });
 }
 
+function cargarEdicion(id) {
+    const item = inventarioGlobal.find(i => i.id === id);
+    if(!item) return;
+    
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('nuevo-nombre').value = item.ingrediente;
+    document.getElementById('nuevo-unidad').value = item.unidad;
+    document.getElementById('nuevo-minimo').value = item.stock_minimo;
+    document.getElementById('nuevo-costo').value = item.costo_unitario;
+    
+    document.getElementById('btn-submit-crud').innerText = 'Actualizar Insumo';
+    document.getElementById('btn-cancelar-edit').style.display = 'inline-block';
+}
+
+function cancelarEdicion() {
+    document.getElementById('formCrearInsumo').reset();
+    document.getElementById('edit-id').value = '';
+    document.getElementById('btn-submit-crud').innerText = 'Guardar Insumo';
+    document.getElementById('btn-cancelar-edit').style.display = 'none';
+}
+
 document.getElementById('formCrearInsumo').addEventListener('submit', async (e) => {
     e.preventDefault();
     toggleLoader(true);
+    
+    const idEdit = document.getElementById('edit-id').value;
     const payload = {
         ingrediente: document.getElementById('nuevo-nombre').value,
         unidad: document.getElementById('nuevo-unidad').value,
@@ -165,18 +193,22 @@ document.getElementById('formCrearInsumo').addEventListener('submit', async (e) 
         costo_unitario: parseFloat(document.getElementById('nuevo-costo').value)
     };
 
+    const isEdit = idEdit !== "";
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${API_URL}/inventario/${currentUser.id_restaurante}/${idEdit}` : `${API_URL}/inventario/${currentUser.id_restaurante}`;
+
     try {
-        const response = await fetch(`${API_URL}/inventario/${currentUser.id_restaurante}`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         if(response.ok) {
-            document.getElementById('formCrearInsumo').reset();
+            cancelarEdicion();
             await cargarDashboard();
             renderizarTablaCrud();
-            showToast("Insumo agregado", "success");
-        } else { showToast("Error al crear", "error"); }
+            showToast(isEdit ? "Insumo actualizado" : "Insumo agregado", "success");
+        } else { showToast("Error al procesar", "error"); }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
 });
