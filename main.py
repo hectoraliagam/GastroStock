@@ -1,14 +1,25 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mysql.connector
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins=["*"], 
+    allow_methods=["*"], 
+    allow_headers=["*"]
+)
 
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost", user="hectoraliagam", password="1234", database="restaurante_pro_db"
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "hectoraliagam"),
+        password=os.getenv("DB_PASSWORD", "1234"),
+        database=os.getenv("DB_NAME", "restaurante_pro_db"),
+        port=os.getenv("DB_PORT", 3306)
     )
 
 class Movimiento(BaseModel):
@@ -38,9 +49,11 @@ def registrar_movimiento(mov: Movimiento):
         conn.start_transaction()
         sql_mov = "INSERT INTO movimientos (id_inventario, tipo, cantidad, motivo, usuario) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(sql_mov, (mov.id_inventario, mov.tipo, mov.cantidad, mov.motivo, mov.usuario))
+        
         operador = "+" if mov.tipo == 'entrada' else "-"
         sql_inv = f"UPDATE inventario SET cantidad_actual = cantidad_actual {operador} %s WHERE id = %s"
         cursor.execute(sql_inv, (mov.cantidad, mov.id_inventario))
+        
         conn.commit()
         return {"status": "success", "message": "Movimiento registrado y stock actualizado"}
     except Exception as e:
@@ -81,8 +94,10 @@ def generar_lista_compras_whatsapp():
     faltantes = cursor.fetchall()
     cursor.close()
     conn.close()
+    
     if not faltantes:
         return {"mensaje_generado": "Todo en orden. No hay compras urgentes hoy."}
+        
     mensaje_wa = "*⚠️ ALERTA DE COMPRAS - CIERRE DE TURNO* \n\n"
     for item in faltantes:
         comprar = item['stock_minimo'] - item['cantidad_actual'] + item['stock_minimo'] # type: ignore
@@ -90,6 +105,4 @@ def generar_lista_compras_whatsapp():
         mensaje_wa += f"   👉 Pedir a: {item['proveedor']} ({item['telefono']})\n" # type: ignore
         mensaje_wa += f"   📦 Cantidad sugerida: {comprar}{item['unidad']}\n\n" # type: ignore
         
-    # Próximamente hacer la petición HTTP a Evolution API para enviar "mensaje_wa" directamente al celular del dueño
-    
     return {"status": "success", "mensaje_generado": mensaje_wa}
