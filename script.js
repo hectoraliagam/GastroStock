@@ -65,10 +65,12 @@ function iniciarDashboard() {
         document.getElementById('widget-capital').style.display = 'none';
         document.querySelector('.col-valorizacion').style.display = 'none';
         document.getElementById('btn-crud-insumos').style.display = 'none';
+        document.getElementById('btn-crud-personal').style.display = 'none'; // Se oculta al empleado
     } else {
         document.getElementById('widget-capital').style.display = 'block';
         document.querySelector('.col-valorizacion').style.display = 'table-cell';
         document.getElementById('btn-crud-insumos').style.display = 'flex';
+        document.getElementById('btn-crud-personal').style.display = 'flex'; // Se muestra al dueño
     }
     cargarDashboard();
 }
@@ -340,6 +342,96 @@ async function eliminarCliente(idRestaurante) {
         }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
+}
+
+// ==========================================
+// GESTIÓN DE PERSONAL (MÓDULO DEL DUEÑO)
+// ==========================================
+function abrirCrudPersonal() {
+    document.getElementById('modal-personal').style.display = 'flex';
+    cargarTablaPersonal();
+}
+
+function cerrarCrudPersonal() {
+    document.getElementById('modal-personal').style.display = 'none';
+}
+
+async function cargarTablaPersonal() {
+    try {
+        const res = await fetch(`${API_URL}/usuarios/${currentUser.id_restaurante}`);
+        const result = await res.json();
+        const tbody = document.getElementById('tabla-crud-personal');
+        tbody.innerHTML = '';
+        
+        result.data.forEach(u => {
+            // No permite que el usuario activo se borre a sí mismo
+            const btnDelete = u.id !== currentUser.id 
+                ? `<button class="btn-action delete" onclick="eliminarPersonal(${u.id})">Eliminar</button>` 
+                : `<span class="badge badge-success">Tú</span>`;
+                
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.rol.toUpperCase()}</td>
+                    <td>${btnDelete}</td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        showToast("Error cargando personal", "error");
+    }
+}
+
+document.getElementById('formCrearPersonal')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    toggleLoader(true);
+    
+    const payload = {
+        username: document.getElementById('nuevo-user-personal').value,
+        password: document.getElementById('nuevo-pass-personal').value,
+        rol: document.getElementById('nuevo-rol-personal').value
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/usuarios/${currentUser.id_restaurante}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await res.json();
+        
+        if(res.ok) {
+            document.getElementById('formCrearPersonal').reset();
+            cargarTablaPersonal();
+            showToast("Usuario agregado al sistema", "success");
+        } else {
+            showToast(result.detail || "Error al crear", "error");
+        }
+    } catch (error) {
+        showToast("Error de conexión", "error");
+    } finally {
+        toggleLoader(false);
+    }
+});
+
+async function eliminarPersonal(idUsuario) {
+    if(!confirm("¿Seguro que deseas revocar el acceso a este usuario?")) return;
+    toggleLoader(true);
+    try {
+        const res = await fetch(`${API_URL}/usuarios/${currentUser.id_restaurante}/${idUsuario}`, { method: 'DELETE' });
+        if(res.ok) {
+            cargarTablaPersonal();
+            showToast("Usuario eliminado", "success");
+        } else {
+            const result = await res.json();
+            showToast(result.detail || "No se puede eliminar", "error");
+        }
+    } catch (error) { 
+        showToast("Error de conexión", "error"); 
+    } finally { 
+        toggleLoader(false); 
+    }
 }
 
 async function enviarAlertaWhatsApp() {

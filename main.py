@@ -100,7 +100,7 @@ def admin_crear_cliente(cliente: NuevoCliente):
         nuevo_id_rest = cursor.lastrowid
         # 2. Crear usuario dueño
         cursor.execute("INSERT INTO usuarios (id_restaurante, username, password, rol) VALUES (%s, %s, %s, 'dueno')", 
-                       (nuevo_id_rest, cliente.username, cliente.password))
+                    (nuevo_id_rest, cliente.username, cliente.password))
         conn.commit()
         return {"status": "success", "message": "Cliente creado exitosamente"}
     except mysql.connector.Error as err:
@@ -268,3 +268,60 @@ def generar_lista_compras_whatsapp(id_restaurante: int):
         mensaje_wa += f"  Proveedor: {prov} ({tel})\n"
         mensaje_wa += f"  Sugerido: {comprar}{item['unidad']}\n\n" # type: ignore
     return {"status": "success", "mensaje_generado": mensaje_wa}
+
+# ==========================================
+# RUTAS GESTIÓN DE PERSONAL (DUEÑOS)
+# ==========================================
+class NuevoUsuario(BaseModel):
+    username: str
+    password: str
+    rol: str = "empleado"
+
+@app.get("/api/usuarios/{id_restaurante}")
+def obtener_usuarios(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    # Excluimos contraseñas por seguridad al listar
+    cursor.execute("SELECT id, username, rol FROM usuarios WHERE id_restaurante = %s", (id_restaurante,))
+    usuarios = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"status": "success", "data": usuarios}
+
+@app.post("/api/usuarios/{id_restaurante}")
+def crear_usuario(id_restaurante: int, user: NuevoUsuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO usuarios (id_restaurante, username, password, rol) VALUES (%s, %s, %s, %s)",
+                    (id_restaurante, user.username, user.password, user.rol))
+        conn.commit()
+        return {"status": "success", "message": "Usuario creado exitosamente"}
+    except mysql.connector.Error as err:
+        conn.rollback()
+        if err.errno == 1062: # Error de duplicado en MySQL
+            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe. Elija otro.")
+        raise HTTPException(status_code=400, detail=str(err))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/usuarios/{id_restaurante}/{id_usuario}")
+def eliminar_usuario(id_restaurante: int, id_usuario: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Prevenir que se borre si no pertenece al restaurante y evitar borrar roles de 'dueno' por error desde aquí
+        cursor.execute("DELETE FROM usuarios WHERE id = %s AND id_restaurante = %s AND rol != 'dueno'", (id_usuario, id_restaurante))
+        
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=400, detail="No se pudo eliminar (Usuario no encontrado o es el Dueño principal).")
+        
+        conn.commit()
+        return {"status": "success", "message": "Usuario eliminado"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()

@@ -71,6 +71,9 @@
         <nav class="navbar">
             <h1>GastroStock</h1>
             <div class="nav-actions">
+                <button id="btn-crud-personal" class="btn-whatsapp" style="background-color: transparent; border-color: var(--primary); color: var(--primary);" onclick="abrirCrudPersonal()">
+                    Gestionar Personal
+                </button>
                 <button id="btn-crud-insumos" class="btn-whatsapp" style="background-color: transparent; border-color: var(--primary); color: var(--primary);" onclick="abrirCrud()">
                     Configurar Insumos
                 </button>
@@ -189,6 +192,50 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-crud-insumos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GESTION DE PERSONAL -->
+    <div id="modal-personal" class="modal">
+        <div class="modal-content crud-modal-content">
+            <span class="close-btn" onclick="cerrarCrudPersonal()">&times;</span>
+            <h2>GESTIÓN DE PERSONAL</h2>
+
+            <form id="formCrearPersonal" class="crud-form">
+                <div class="crud-form-row">
+                    <div class="form-group-crud flex-1">
+                        <label>USUARIO</label>
+                        <input type="text" id="nuevo-user-personal" placeholder="Ej. cajero01" required>
+                    </div>
+                    <div class="form-group-crud flex-1">
+                        <label>CONTRASEÑA</label>
+                        <input type="text" id="nuevo-pass-personal" placeholder="Clave segura" required>
+                    </div>
+                    <div class="form-group-crud flex-1">
+                        <label>ROL</label>
+                        <select id="nuevo-rol-personal" required>
+                            <option value="empleado">Empleado (Caja/Cocina)</option>
+                            <option value="dueno">Dueño (Administrador)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="crud-form-actions">
+                    <button type="submit" class="btn-submit">AGREGAR USUARIO</button>
+                </div>
+            </form>
+
+            <div class="table-responsive listado-insumos">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>USUARIO</th>
+                            <th>ROL</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-crud-personal"></tbody>
                 </table>
             </div>
         </div>
