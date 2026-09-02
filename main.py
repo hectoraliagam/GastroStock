@@ -4,12 +4,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mysql.connector
 
-app = FastAPI()
+app = FastAPI(title="GastroStock API", version="1.0", description="API para gestión de inventarios y sucursales")
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
 )
 
+# ==========================================
+# CONFIGURACIÓN Y UTILIDADES
+# ==========================================
 def get_db_connection():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
@@ -19,7 +22,9 @@ def get_db_connection():
         port=os.getenv("DB_PORT", 3306)
     )
 
-# Modelos Generales
+# ==========================================
+# MODELOS DE DATOS (PYDANTIC)
+# ==========================================
 class LoginData(BaseModel):
     username: str
     password: str
@@ -37,7 +42,6 @@ class ItemInventario(BaseModel):
     stock_minimo: float
     costo_unitario: float
 
-# Modelos Superadmin
 class NuevoCliente(BaseModel):
     nombre_restaurante: str
     username: str
@@ -46,11 +50,18 @@ class NuevoCliente(BaseModel):
 class EstadoCliente(BaseModel):
     estado: str
 
-@app.post("/api/login")
+class NuevoUsuario(BaseModel):
+    username: str
+    password: str
+    rol: str = "empleado"
+
+# ==========================================
+# RUTAS: AUTENTICACIÓN
+# ==========================================
+@app.post("/api/login", tags=["Autenticación"])
 def login(data: LoginData):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Hacemos LEFT JOIN para traer el estado del restaurante (si tiene uno)
     query = """
         SELECT u.id, u.id_restaurante, u.username, u.rol, r.estado 
         FROM usuarios u 
@@ -65,16 +76,15 @@ def login(data: LoginData):
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     
-    # Bloquear si no pagó (solo a usuarios que no son superadmin)
     if user['rol'] != 'superadmin' and user['estado'] == 'suspendido': # type: ignore
         raise HTTPException(status_code=403, detail="Membresía suspendida. Contacte al proveedor.")
         
     return {"status": "success", "user": user}
 
 # ==========================================
-# RUTAS SUPERADMIN (PANEL MAESTRO)
+# RUTAS: SUPERADMIN (GESTIÓN DE CLIENTES)
 # ==========================================
-@app.get("/api/admin/restaurantes")
+@app.get("/api/admin/restaurantes", tags=["Superadmin"])
 def admin_get_restaurantes():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -89,16 +99,14 @@ def admin_get_restaurantes():
     conn.close()
     return {"status": "success", "data": clientes}
 
-@app.post("/api/admin/restaurantes")
+@app.post("/api/admin/restaurantes", tags=["Superadmin"])
 def admin_crear_cliente(cliente: NuevoCliente):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         conn.start_transaction()
-        # 1. Crear Restaurante
         cursor.execute("INSERT INTO restaurantes (nombre) VALUES (%s)", (cliente.nombre_restaurante,))
         nuevo_id_rest = cursor.lastrowid
-        # 2. Crear usuario dueño
         cursor.execute("INSERT INTO usuarios (id_restaurante, username, password, rol) VALUES (%s, %s, %s, 'dueno')", 
                     (nuevo_id_rest, cliente.username, cliente.password))
         conn.commit()
@@ -112,7 +120,7 @@ def admin_crear_cliente(cliente: NuevoCliente):
         cursor.close()
         conn.close()
 
-@app.put("/api/admin/restaurantes/{id_restaurante}/estado")
+@app.put("/api/admin/restaurantes/{id_restaurante}/estado", tags=["Superadmin"])
 def admin_cambiar_estado(id_restaurante: int, data: EstadoCliente):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -127,12 +135,11 @@ def admin_cambiar_estado(id_restaurante: int, data: EstadoCliente):
         cursor.close()
         conn.close()
 
-@app.delete("/api/admin/restaurantes/{id_restaurante}")
+@app.delete("/api/admin/restaurantes/{id_restaurante}", tags=["Superadmin"])
 def admin_eliminar_cliente(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Por las llaves foráneas ON DELETE CASCADE, esto borrará inventario, movimientos y usuarios
         cursor.execute("DELETE FROM restaurantes WHERE id = %s", (id_restaurante,))
         conn.commit()
         return {"status": "success", "message": "Cliente eliminado con todos sus datos"}
@@ -144,9 +151,9 @@ def admin_eliminar_cliente(id_restaurante: int):
         conn.close()
 
 # ==========================================
-# RUTAS CLIENTES (INVENTARIO Y KARDEX)
+# RUTAS: INVENTARIO Y MOVIMIENTOS
 # ==========================================
-@app.get("/api/inventario/{id_restaurante}")
+@app.get("/api/inventario/{id_restaurante}", tags=["Inventario"])
 def obtener_inventario(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -158,7 +165,7 @@ def obtener_inventario(id_restaurante: int):
         item["alerta_compra"] = float(item["cantidad_actual"]) <= float(item["stock_minimo"]) # type: ignore
     return {"status": "success", "data": items}
 
-@app.post("/api/inventario/{id_restaurante}")
+@app.post("/api/inventario/{id_restaurante}", tags=["Inventario"])
 def crear_insumo(id_restaurante: int, item: ItemInventario):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -174,7 +181,7 @@ def crear_insumo(id_restaurante: int, item: ItemInventario):
         cursor.close()
         conn.close()
 
-@app.put("/api/inventario/{id_restaurante}/{id_insumo}")
+@app.put("/api/inventario/{id_restaurante}/{id_insumo}", tags=["Inventario"])
 def editar_insumo(id_restaurante: int, id_insumo: int, item: ItemInventario):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -194,7 +201,7 @@ def editar_insumo(id_restaurante: int, id_insumo: int, item: ItemInventario):
         cursor.close()
         conn.close()
 
-@app.delete("/api/inventario/{id_restaurante}/{id_insumo}")
+@app.delete("/api/inventario/{id_restaurante}/{id_insumo}", tags=["Inventario"])
 def eliminar_insumo(id_restaurante: int, id_insumo: int):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -209,7 +216,7 @@ def eliminar_insumo(id_restaurante: int, id_insumo: int):
         cursor.close()
         conn.close()
 
-@app.post("/api/movimientos")
+@app.post("/api/movimientos", tags=["Kardex"])
 def registrar_movimiento(mov: Movimiento):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -229,7 +236,10 @@ def registrar_movimiento(mov: Movimiento):
         cursor.close()
         conn.close()
 
-@app.get("/api/reportes/valorizacion/{id_restaurante}")
+# ==========================================
+# RUTAS: REPORTES Y ALERTAS
+# ==========================================
+@app.get("/api/reportes/valorizacion/{id_restaurante}", tags=["Reportes"])
 def reporte_valorizacion(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -243,7 +253,7 @@ def reporte_valorizacion(id_restaurante: int):
     conn.close()
     return {"capital_total_almacen": round(total_capital, 2), "detalle": items}
 
-@app.get("/api/alertas/compras/{id_restaurante}")
+@app.get("/api/alertas/compras/{id_restaurante}", tags=["Reportes"])
 def generar_lista_compras_whatsapp(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -256,6 +266,7 @@ def generar_lista_compras_whatsapp(id_restaurante: int):
     faltantes = cursor.fetchall()
     cursor.close()
     conn.close()
+    
     if not faltantes:
         return {"mensaje_generado": "Todo en orden. No hay compras urgentes hoy."}
     
@@ -270,25 +281,19 @@ def generar_lista_compras_whatsapp(id_restaurante: int):
     return {"status": "success", "mensaje_generado": mensaje_wa}
 
 # ==========================================
-# RUTAS GESTIÓN DE PERSONAL (DUEÑOS)
+# RUTAS: GESTIÓN DE USUARIOS
 # ==========================================
-class NuevoUsuario(BaseModel):
-    username: str
-    password: str
-    rol: str = "empleado"
-
-@app.get("/api/usuarios/{id_restaurante}")
+@app.get("/api/usuarios/{id_restaurante}", tags=["Usuarios"])
 def obtener_usuarios(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Excluimos contraseñas por seguridad al listar
     cursor.execute("SELECT id, username, rol FROM usuarios WHERE id_restaurante = %s", (id_restaurante,))
     usuarios = cursor.fetchall()
     cursor.close()
     conn.close()
     return {"status": "success", "data": usuarios}
 
-@app.post("/api/usuarios/{id_restaurante}")
+@app.post("/api/usuarios/{id_restaurante}", tags=["Usuarios"])
 def crear_usuario(id_restaurante: int, user: NuevoUsuario):
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -299,24 +304,21 @@ def crear_usuario(id_restaurante: int, user: NuevoUsuario):
         return {"status": "success", "message": "Usuario creado exitosamente"}
     except mysql.connector.Error as err:
         conn.rollback()
-        if err.errno == 1062: # Error de duplicado en MySQL
-            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe. Elija otro.")
+        if err.errno == 1062:
+            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe.")
         raise HTTPException(status_code=400, detail=str(err))
     finally:
         cursor.close()
         conn.close()
 
-@app.delete("/api/usuarios/{id_restaurante}/{id_usuario}")
+@app.delete("/api/usuarios/{id_restaurante}/{id_usuario}", tags=["Usuarios"])
 def eliminar_usuario(id_restaurante: int, id_usuario: int):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Prevenir que se borre si no pertenece al restaurante y evitar borrar roles de 'dueno' por error desde aquí
         cursor.execute("DELETE FROM usuarios WHERE id = %s AND id_restaurante = %s AND rol != 'dueno'", (id_usuario, id_restaurante))
-        
         if cursor.rowcount == 0:
             raise HTTPException(status_code=400, detail="No se pudo eliminar (Usuario no encontrado o es el Dueño principal).")
-        
         conn.commit()
         return {"status": "success", "message": "Usuario eliminado"}
     except Exception as e:

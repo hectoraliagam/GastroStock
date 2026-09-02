@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- COMPONENTES GLOBALES -->
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
         <span>Cargando...</span>
     </div>
-
     <div id="toast-container" class="toast-container"></div>
 
     <!-- PANTALLA DE LOGIN -->
-    <div id="login-screen" class="login-container">
+    <main id="login-screen" class="login-container">
         <div class="login-box">
             <h2>GastroStock</h2>
             <p>Acceso al Sistema</p>
@@ -25,19 +25,19 @@
                 <button type="submit" class="btn-submit">Ingresar</button>
             </form>
         </div>
-    </div>
+    </main>
 
     <!-- PANTALLA SUPERADMIN (Master) -->
-    <div id="superadmin-dashboard" class="dashboard-container" style="display: none;">
-        <nav class="navbar">
-            <h1>GastroStock <span style="color:var(--danger)">[MASTER]</span></h1>
+    <section id="superadmin-dashboard" class="dashboard-container" style="display: none;">
+        <header class="navbar">
+            <h1>GastroStock <span class="badge badge-danger">[MASTER]</span></h1>
             <div class="nav-actions">
                 <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
-        </nav>
+        </header>
         
         <div class="container" style="display: block;">
-            <div class="card" style="margin-bottom: 20px;">
+            <article class="card" style="margin-bottom: 20px;">
                 <div class="card-header">NUEVO CLIENTE</div>
                 <form id="formNuevoCliente" class="crud-form-row" style="flex-wrap: wrap;">
                     <input type="text" id="admin-restaurante" placeholder="Nombre Restaurante" required style="flex:1; min-width: 180px;">
@@ -45,9 +45,9 @@
                     <input type="text" id="admin-pass" placeholder="Contraseña" required style="flex:1; min-width: 120px;">
                     <button type="submit" class="btn-submit" style="width: auto;">+ Crear Cliente</button>
                 </form>
-            </div>
+            </article>
 
-            <div class="card">
+            <article class="card">
                 <div class="card-header">CARTERA DE CLIENTES</div>
                 <div class="table-responsive">
                     <table>
@@ -63,18 +63,19 @@
                         <tbody id="tabla-admin-clientes"></tbody>
                     </table>
                 </div>
-            </div>
+            </article>
         </div>
-    </div>
+    </section>
 
-    <div id="app-dashboard" class="dashboard-container">
-        <nav class="navbar">
+    <!-- PANTALLA CLIENTES (Dueños y Empleados) -->
+    <section id="app-dashboard" class="dashboard-container" style="display: none;">
+        <header class="navbar">
             <h1>GastroStock</h1>
             <div class="nav-actions">
-                <button id="btn-crud-personal" class="btn-whatsapp" style="background-color: transparent; border-color: var(--primary); color: var(--primary);" onclick="abrirCrudPersonal()">
+                <button id="btn-crud-personal" class="btn-outline-primary" onclick="abrirCrudPersonal()">
                     Gestionar Personal
                 </button>
-                <button id="btn-crud-insumos" class="btn-whatsapp" style="background-color: transparent; border-color: var(--primary); color: var(--primary);" onclick="abrirCrud()">
+                <button id="btn-crud-insumos" class="btn-outline-primary" onclick="abrirCrud()">
                     Configurar Insumos
                 </button>
                 <button class="btn-whatsapp" onclick="mostrarModalProximaAct()">
@@ -82,16 +83,16 @@
                 </button>
                 <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
-        </nav>
+        </header>
         
         <div class="container">
-            <div class="col-left">
+            <aside class="col-left">
                 <div class="widget-dinero" id="widget-capital">
                     <h3>Capital Inmovilizado</h3>
                     <p class="monto" id="capital-total">S/ 0.00</p>
                 </div>
                 
-                <div class="card">
+                <article class="card">
                     <div class="card-header">Gestión de Movimientos</div>
                     <form id="formMovimiento">
                         <div class="form-group">
@@ -116,11 +117,11 @@
                         </div>
                         <button type="submit" class="btn-submit">Procesar Transacción</button>
                     </form>
-                </div>
-            </div>
+                </article>
+            </aside>
             
-            <div class="col-right">
-                <div class="card">
+            <main class="col-right">
+                <article class="card">
                     <div class="card-header">Monitor de Inventario</div>
                     <div class="table-responsive">
                         <table>
@@ -135,12 +136,16 @@
                             <tbody id="tabla-inventario"></tbody>
                         </table>
                     </div>
-                </div>
-            </div>
+                </article>
+            </main>
         </div>
-    </div>
+    </section>
 
-    <!-- Modal Gestión de Insumos -->
+    <!-- ==========================================
+         ZONA DE MODALES 
+    ========================================== -->
+    
+    <!-- Modal: Gestión de Insumos -->
     <div id="modal-crud" class="modal">
         <div class="modal-content crud-modal-content">
             <span class="close-btn" onclick="cerrarCrud()">&times;</span>
@@ -148,7 +153,6 @@
             
             <form id="formCrearInsumo" class="crud-form">
                 <input type="hidden" id="edit-id" value="">
-                
                 <div class="crud-form-row">
                     <div class="form-group-crud flex-2">
                         <label>Nombre del Insumo</label>
@@ -164,7 +168,6 @@
                         </select>
                     </div>
                 </div>
-                
                 <div class="crud-form-row">
                     <div class="form-group-crud flex-1">
                         <label>Stock Mínimo (Alerta)</label>
@@ -175,7 +178,6 @@
                         <input type="number" id="nuevo-costo" placeholder="0.00" step="0.01" required>
                     </div>
                 </div>
-                
                 <div class="crud-form-actions">
                     <button type="button" id="btn-cancelar-edit" class="btn-cancel" style="display: none;" onclick="cancelarEdicion()">Cancelar</button>
                     <button type="submit" id="btn-submit-crud" class="btn-submit">Guardar Insumo</button>
@@ -197,24 +199,24 @@
         </div>
     </div>
 
-    <!-- MODAL GESTION DE PERSONAL -->
+    <!-- Modal: Gestión de Personal -->
     <div id="modal-personal" class="modal">
         <div class="modal-content crud-modal-content">
             <span class="close-btn" onclick="cerrarCrudPersonal()">&times;</span>
-            <h2>GESTIÓN DE PERSONAL</h2>
+            <h2>Gestión de Personal</h2>
 
             <form id="formCrearPersonal" class="crud-form">
                 <div class="crud-form-row">
                     <div class="form-group-crud flex-1">
-                        <label>USUARIO</label>
+                        <label>Usuario</label>
                         <input type="text" id="nuevo-user-personal" placeholder="Ej. cajero01" required>
                     </div>
                     <div class="form-group-crud flex-1">
-                        <label>CONTRASEÑA</label>
+                        <label>Contraseña</label>
                         <input type="text" id="nuevo-pass-personal" placeholder="Clave segura" required>
                     </div>
                     <div class="form-group-crud flex-1">
-                        <label>ROL</label>
+                        <label>Rol</label>
                         <select id="nuevo-rol-personal" required>
                             <option value="empleado">Empleado (Caja/Cocina)</option>
                             <option value="dueno">Dueño (Administrador)</option>
@@ -222,7 +224,7 @@
                     </div>
                 </div>
                 <div class="crud-form-actions">
-                    <button type="submit" class="btn-submit">AGREGAR USUARIO</button>
+                    <button type="submit" class="btn-submit">Agregar Usuario</button>
                 </div>
             </form>
 
@@ -230,9 +232,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>USUARIO</th>
-                            <th>ROL</th>
-                            <th>ACCIONES</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-crud-personal"></tbody>
@@ -241,14 +243,14 @@
         </div>
     </div>
 
-    <!-- Modal Próxima Actualización -->
+    <!-- Modal: Próxima Actualización -->
     <div id="modal-update" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="cerrarModal()">&times;</span>
-            <div class="modal-icon">🚀</div>
+            <div class="modal-icon" style="font-size: 40px; margin-bottom: 15px;">🚀</div>
             <h2>Módulo en Configuración</h2>
             <p>La integración con <strong>WhatsApp automatizado</strong> estará disponible en la próxima actualización del sistema. Gracias.</p>
-            <button class="btn-submit" onclick="cerrarModal()">Entendido</button>
+            <button class="btn-submit" onclick="cerrarModal()" style="margin-top: 15px;">Entendido</button>
         </div>
     </div>
     
