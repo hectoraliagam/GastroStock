@@ -40,12 +40,18 @@
         
         <div class="container" style="display: block;">
             <article class="card" style="margin-bottom: 20px;">
-                <div class="card-header">NUEVO CLIENTE</div>
-                <form id="formNuevoCliente" class="crud-form-row" style="flex-wrap: wrap;">
+                <div class="card-header" id="header-admin-form">NUEVO CLIENTE</div>
+                <form id="formNuevoCliente" class="crud-form-row" style="flex-wrap: wrap; align-items: center;">
+                    <input type="hidden" id="edit-admin-id" value="">
+                    
                     <input type="text" id="admin-restaurante" placeholder="Nombre Restaurante" required style="flex:1; min-width: 180px;">
                     <input type="text" id="admin-user" placeholder="Usuario (Dueño)" required style="flex:1; min-width: 120px;">
                     <input type="text" id="admin-pass" placeholder="Contraseña" required style="flex:1; min-width: 120px;">
-                    <button type="submit" class="btn-submit" style="width: auto;">+ Crear Cliente</button>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="btn-cancelar-admin" class="btn-cancel" style="display: none; padding: 12px;" onclick="cancelarEdicionCliente()">Cancelar</button>
+                        <button type="submit" id="btn-submit-admin" class="btn-submit" style="width: auto;">+ Crear Cliente</button>
+                    </div>
                 </form>
             </article>
 
@@ -74,21 +80,11 @@
         <header class="navbar">
             <h1>GastroStock</h1>
             <div class="nav-actions">
-                <button id="btn-historial" class="btn-outline-primary" onclick="abrirHistorial()">
-                    Kardex (Historial)
-                </button>
-                <button id="btn-crud-proveedores" class="btn-outline-primary" onclick="abrirCrudProveedores()">
-                    Proveedores
-                </button>
-                <button id="btn-crud-insumos" class="btn-outline-primary" onclick="abrirCrud()">
-                    Insumos
-                </button>
-                <button id="btn-crud-personal" class="btn-outline-primary" onclick="abrirCrudPersonal()">
-                    Personal
-                </button>
-                <button id="btn-descargar-pdf" class="btn-outline-primary" onclick="descargarReportePDF()">
-                    Descargar Reporte
-                </button>
+                <button id="btn-historial" class="btn-outline-primary" onclick="abrirHistorial()">Kardex (Historial)</button>
+                <button id="btn-crud-proveedores" class="btn-outline-primary" onclick="abrirCrudProveedores()">Proveedores</button>
+                <button id="btn-crud-insumos" class="btn-outline-primary" onclick="abrirCrud()">Insumos</button>
+                <button id="btn-crud-personal" class="btn-outline-primary" onclick="abrirCrudPersonal()">Personal</button>
+                <button id="btn-descargar-pdf" class="btn-outline-primary" onclick="descargarReportePDF()">Descargar Reporte</button>
                 <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
         </header>
@@ -150,9 +146,7 @@
         </div>
     </section>
 
-    <!-- ==========================================
-         ZONA DE MODALES (CRUDS Y VISTAS)
-    ========================================== -->
+    <!-- ZONA DE MODALES -->
     
     <!-- Modal: Gestión de Insumos -->
     <div id="modal-crud" class="modal">
@@ -264,6 +258,8 @@
             <h2>Gestión de Personal</h2>
 
             <form id="formCrearPersonal" class="crud-form">
+                <input type="hidden" id="edit-personal-id" value="">
+                
                 <div class="crud-form-row">
                     <div class="form-group-crud flex-1">
                         <label>Usuario</label>
@@ -282,7 +278,8 @@
                     </div>
                 </div>
                 <div class="crud-form-actions">
-                    <button type="submit" class="btn-submit">Agregar Usuario</button>
+                    <button type="button" id="btn-cancelar-personal" class="btn-cancel" style="display: none;" onclick="cancelarEdicionPersonal()">Cancelar</button>
+                    <button type="submit" id="btn-submit-personal" class="btn-submit">Agregar Usuario</button>
                 </div>
             </form>
 
@@ -290,7 +287,7 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Usuario</th>
+                            <th>Acceso (User/Pass)</th>
                             <th>Rol</th>
                             <th>Acciones</th>
                         </tr>
@@ -325,34 +322,37 @@
     </div>
     
     <!-- Plantilla Oculta para el PDF Gerencial -->
-    <div id="pdf-template" style="display: none; padding: 40px; font-family: 'Segoe UI', sans-serif; color: #000; background: #fff; width: 800px;">
-        <h1 style="color: #d4af37; border-bottom: 2px solid #333; padding-bottom: 10px;">📊 Dashboard Gerencial - GastroStock</h1>
+    <div id="pdf-template" style="display: none; padding: 40px; font-family: 'Segoe UI', sans-serif; color: #000; background: #fff; max-width: 750px; margin: 0 auto;">
         
-        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; width: 30%; border-left: 5px solid #10b981;">
-                <h3 style="margin: 0; color: #555; font-size: 14px;">CAPITAL INMOVILIZADO</h3>
-                <h2 id="kpi-capital" style="color: #333; margin: 10px 0 0 0; font-size: 24px;">S/ 0.00</h2>
-            </div>
-            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; width: 30%; border-left: 5px solid #ef4444;">
-                <h3 style="margin: 0; color: #555; font-size: 14px;">INSUMOS CRÍTICOS</h3>
-                <h2 id="kpi-alertas" style="color: #333; margin: 10px 0 0 0; font-size: 24px;">0</h2>
-            </div>
-            <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; width: 30%; border-left: 5px solid #d4af37;">
-                <h3 style="margin: 0; color: #555; font-size: 14px;">PROVEEDORES ACTIVOS</h3>
-                <h2 id="kpi-proveedores" style="color: #333; margin: 10px 0 0 0; font-size: 24px;">0</h2>
-            </div>
-        </div>
+        <h1 style="color: #d4af37; border-bottom: 2px solid #333; padding-bottom: 10px; font-size: 26px;">📊 Dashboard Gerencial - GastroStock</h1>
+        
+        <table style="width: 100%; margin-top: 25px; border-collapse: separate; border-spacing: 15px 0;">
+            <tr>
+                <td style="background: #f3f4f6; padding: 20px; border-radius: 8px; border-left: 5px solid #10b981; width: 33%; vertical-align: top;">
+                    <h3 style="margin: 0; color: #555; font-size: 13px;">CAPITAL INMOVILIZADO</h3>
+                    <h2 id="kpi-capital" style="color: #333; margin: 10px 0 0 0; font-size: 22px;">S/ 0.00</h2>
+                </td>
+                <td style="background: #f3f4f6; padding: 20px; border-radius: 8px; border-left: 5px solid #ef4444; width: 33%; vertical-align: top;">
+                    <h3 style="margin: 0; color: #555; font-size: 13px;">INSUMOS CRÍTICOS</h3>
+                    <h2 id="kpi-alertas" style="color: #333; margin: 10px 0 0 0; font-size: 22px;">0</h2>
+                </td>
+                <td style="background: #f3f4f6; padding: 20px; border-radius: 8px; border-left: 5px solid #d4af37; width: 33%; vertical-align: top;">
+                    <h3 style="margin: 0; color: #555; font-size: 13px;">PROVEEDORES ACTIVOS</h3>
+                    <h2 id="kpi-proveedores" style="color: #333; margin: 10px 0 0 0; font-size: 22px;">0</h2>
+                </td>
+            </tr>
+        </table>
 
-        <h3 style="margin-top: 40px; color: #333;">📦 Frecuencia de Movimientos (Kardex)</h3>
-        <ul id="kpi-lista-movimientos" style="color: #555; font-size: 16px; line-height: 1.8;"></ul>
+        <h3 style="margin-top: 40px; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 8px;">📦 Frecuencia de Movimientos (Kardex)</h3>
+        <ul id="kpi-lista-movimientos" style="color: #555; font-size: 15px; line-height: 1.8; margin-top: 15px;"></ul>
 
-        <h3 style="margin-top: 40px; color: #333;">📞 Directorio de Proveedores</h3>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; text-align: left;">
+        <h3 style="margin-top: 40px; color: #333; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 8px;">📞 Directorio de Proveedores</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; text-align: left;">
             <thead>
                 <tr style="background-color: #f3f4f6; color: #555;">
-                    <th style="padding: 10px; border: 1px solid #ddd;">Proveedor</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Teléfono</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Días de Entrega</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Proveedor</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Teléfono</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Días de Entrega</th>
                 </tr>
             </thead>
             <tbody id="kpi-lista-proveedores"></tbody>

@@ -7,6 +7,8 @@ const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 let currentUser = JSON.parse(localStorage.getItem('gastro_user'));
 let inventarioGlobal = [];
 let proveedoresGlobal = [];
+let clientesGlobal = [];
+let personalGlobal = [];
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
@@ -130,12 +132,10 @@ async function cargarDashboardCliente() {
             document.getElementById('capital-total').innerText = `S/ ${dataVal.capital_total_almacen.toFixed(2)}`;
         }
 
-        // Cargar Proveedores para los selects
         const resProv = await fetch(`${API_URL}/proveedores/${currentUser.id_restaurante}`);
         const dataProv = await resProv.json();
         proveedoresGlobal = dataProv.data;
 
-        // Cargar Inventario
         const resInv = await fetch(`${API_URL}/inventario/${currentUser.id_restaurante}`);
         const inventarioData = await resInv.json();
         inventarioGlobal = inventarioData.data;
@@ -203,18 +203,14 @@ async function handleMovimiento(e) {
         } else { 
             showToast("Error en la transacción", "error"); 
         }
-    } catch (error) { 
-        showToast("Fallo de conexión", "error"); 
-    } finally { 
-        toggleLoader(false); 
-    }
+    } catch (error) { showToast("Fallo de conexión", "error"); } 
+    finally { toggleLoader(false); }
 }
 
 function abrirHistorial() {
     document.getElementById('modal-historial').style.display = 'flex';
     cargarHistorial();
 }
-
 function cerrarHistorial() { document.getElementById('modal-historial').style.display = 'none'; }
 
 async function cargarHistorial() {
@@ -246,9 +242,7 @@ async function cargarHistorial() {
                     <td>${m.usuario}</td>
                 </tr>`;
         });
-    } catch (error) {
-        showToast("Error cargando historial", "error");
-    }
+    } catch (error) { showToast("Error cargando historial", "error"); }
 }
 
 /* ==========================================
@@ -276,11 +270,9 @@ function renderizarTablaProveedores() {
             </tr>`;
     });
 }
-
 function cargarEdicionProveedor(id) {
     const p = proveedoresGlobal.find(i => i.id === id);
     if(!p) return;
-    
     document.getElementById('edit-prov-id').value = p.id;
     document.getElementById('prov-nombre').value = p.nombre;
     document.getElementById('prov-telefono').value = p.telefono;
@@ -289,7 +281,6 @@ function cargarEdicionProveedor(id) {
     document.getElementById('btn-submit-prov').innerText = 'Actualizar';
     document.getElementById('btn-cancelar-prov').style.display = 'inline-block';
 }
-
 function cancelarEdicionProveedor() {
     document.getElementById('formCrearProveedor').reset();
     document.getElementById('edit-prov-id').value = '';
@@ -300,40 +291,28 @@ function cancelarEdicionProveedor() {
 async function handleProveedor(e) {
     e.preventDefault();
     toggleLoader(true);
-    
     const idEdit = document.getElementById('edit-prov-id').value;
     const isEdit = idEdit !== "";
-    
     const payload = {
         nombre: document.getElementById('prov-nombre').value,
         telefono: document.getElementById('prov-telefono').value,
         dias_entrega: document.getElementById('prov-dias').value
     };
-
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit 
         ? `${API_URL}/proveedores/${currentUser.id_restaurante}/${idEdit}` 
         : `${API_URL}/proveedores/${currentUser.id_restaurante}`;
 
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if(response.ok) {
             cancelarEdicionProveedor();
-            await cargarDashboardCliente(); // Refresca lista global
-            renderizarTablaProveedores(); // Refresca vista del modal
+            await cargarDashboardCliente(); 
+            renderizarTablaProveedores(); 
             showToast(isEdit ? "Proveedor actualizado" : "Proveedor agregado", "success");
-        } else { 
-            showToast("Error al procesar", "error"); 
-        }
-    } catch (error) { 
-        showToast("Error de conexión", "error"); 
-    } finally { 
-        toggleLoader(false); 
-    }
+        } else { showToast("Error al procesar", "error"); }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
 }
 
 async function eliminarProveedor(id_prov) {
@@ -357,17 +336,13 @@ async function eliminarProveedor(id_prov) {
 function abrirCrud() { 
     document.getElementById('modal-crud').style.display = 'flex'; 
     cancelarEdicion();
-    
-    // Llenar select de proveedores
     const selectProv = document.getElementById('nuevo-proveedor');
     selectProv.innerHTML = '<option value="">Sin proveedor asignado</option>';
     proveedoresGlobal.forEach(p => {
         selectProv.innerHTML += `<option value="${p.id}">${p.nombre}</option>`;
     });
-
     renderizarTablaCrudInsumos(); 
 }
-
 function cerrarCrud() { document.getElementById('modal-crud').style.display = 'none'; }
 
 function renderizarTablaCrudInsumos() {
@@ -385,11 +360,9 @@ function renderizarTablaCrudInsumos() {
             </tr>`;
     });
 }
-
 function cargarEdicionInsumo(id) {
     const item = inventarioGlobal.find(i => i.id === id);
     if(!item) return;
-    
     document.getElementById('edit-id').value = item.id;
     document.getElementById('nuevo-nombre').value = item.ingrediente;
     document.getElementById('nuevo-proveedor').value = item.id_proveedor || "";
@@ -400,7 +373,6 @@ function cargarEdicionInsumo(id) {
     document.getElementById('btn-submit-crud').innerText = 'Actualizar Insumo';
     document.getElementById('btn-cancelar-edit').style.display = 'inline-block';
 }
-
 function cancelarEdicion() {
     document.getElementById('formCrearInsumo').reset();
     document.getElementById('edit-id').value = '';
@@ -411,11 +383,9 @@ function cancelarEdicion() {
 async function handleInsumo(e) {
     e.preventDefault();
     toggleLoader(true);
-    
     const idEdit = document.getElementById('edit-id').value;
     const isEdit = idEdit !== "";
     const valProv = document.getElementById('nuevo-proveedor').value;
-    
     const payload = {
         ingrediente: document.getElementById('nuevo-nombre').value,
         id_proveedor: valProv === "" ? null : parseInt(valProv),
@@ -423,33 +393,22 @@ async function handleInsumo(e) {
         stock_minimo: parseFloat(document.getElementById('nuevo-minimo').value),
         costo_unitario: parseFloat(document.getElementById('nuevo-costo').value)
     };
-
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit 
         ? `${API_URL}/inventario/${currentUser.id_restaurante}/${idEdit}` 
         : `${API_URL}/inventario/${currentUser.id_restaurante}`;
 
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const response = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if(response.ok) {
             cancelarEdicion();
             await cargarDashboardCliente();
             renderizarTablaCrudInsumos();
             showToast(isEdit ? "Insumo actualizado" : "Insumo agregado", "success");
-        } else { 
-            showToast("Error al procesar", "error"); 
-        }
-    } catch (error) { 
-        showToast("Error de conexión", "error"); 
-    } finally { 
-        toggleLoader(false); 
-    }
+        } else { showToast("Error al procesar", "error"); }
+    } catch (error) { showToast("Error de conexión", "error"); } 
+    finally { toggleLoader(false); }
 }
-
 async function eliminarInsumo(id_insumo) {
     if(!confirm("¿Seguro que deseas eliminar este insumo?")) return;
     toggleLoader(true);
@@ -459,9 +418,7 @@ async function eliminarInsumo(id_insumo) {
             await cargarDashboardCliente();
             renderizarTablaCrudInsumos();
             showToast("Insumo eliminado", "success");
-        } else { 
-            showToast("No se puede eliminar porque tiene movimientos guardados.", "error"); 
-        }
+        } else { showToast("No se puede eliminar porque tiene movimientos guardados.", "error"); }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
 }
@@ -471,6 +428,7 @@ async function eliminarInsumo(id_insumo) {
 ========================================== */
 function abrirCrudPersonal() {
     document.getElementById('modal-personal').style.display = 'flex';
+    cancelarEdicionPersonal();
     cargarTablaPersonal();
 }
 function cerrarCrudPersonal() { document.getElementById('modal-personal').style.display = 'none'; }
@@ -479,44 +437,78 @@ async function cargarTablaPersonal() {
     try {
         const res = await fetch(`${API_URL}/usuarios/${currentUser.id_restaurante}`);
         const result = await res.json();
+        personalGlobal = result.data; // Guardamos para edición
+        
         const tbody = document.getElementById('tabla-crud-personal');
         tbody.innerHTML = '';
         
-        result.data.forEach(u => {
-            const btnDelete = u.id !== currentUser.id 
-                ? `<button class="btn-action delete" onclick="eliminarPersonal(${u.id})">Eliminar</button>` 
-                : `<span class="badge badge-success">Tú</span>`;
+        personalGlobal.forEach(u => {
+            let btnAcciones = `<button class="btn-action edit" onclick="cargarEdicionPersonal(${u.id})">Editar</button>`;
+            if (u.id !== currentUser.id) {
+                btnAcciones += `<button class="btn-action delete" onclick="eliminarPersonal(${u.id})">Eliminar</button>`;
+            } else {
+                btnAcciones += `<span class="badge badge-success">Tú</span>`;
+            }
                 
             tbody.innerHTML += `
                 <tr>
-                    <td><strong>${u.username}</strong></td>
+                    <td><small>U: ${u.username}<br>P: ${u.password}</small></td>
                     <td>${u.rol.toUpperCase()}</td>
-                    <td>${btnDelete}</td>
+                    <td>${btnAcciones}</td>
                 </tr>`;
         });
     } catch (error) { showToast("Error cargando personal", "error"); }
 }
 
+function cargarEdicionPersonal(id) {
+    const user = personalGlobal.find(u => u.id === id);
+    if (!user) return;
+    document.getElementById('edit-personal-id').value = user.id;
+    document.getElementById('nuevo-user-personal').value = user.username;
+    document.getElementById('nuevo-pass-personal').value = user.password;
+    document.getElementById('nuevo-rol-personal').value = user.rol;
+    
+    document.getElementById('btn-submit-personal').innerText = 'Actualizar Usuario';
+    document.getElementById('btn-cancelar-personal').style.display = 'inline-block';
+}
+
+function cancelarEdicionPersonal() {
+    document.getElementById('formCrearPersonal').reset();
+    document.getElementById('edit-personal-id').value = '';
+    document.getElementById('btn-submit-personal').innerText = 'Agregar Usuario';
+    document.getElementById('btn-cancelar-personal').style.display = 'none';
+}
+
 async function handleNuevoPersonal(e) {
     e.preventDefault();
     toggleLoader(true);
+    
+    const idEdit = document.getElementById('edit-personal-id').value;
+    const isEdit = idEdit !== "";
+    
     const payload = {
         username: document.getElementById('nuevo-user-personal').value,
         password: document.getElementById('nuevo-pass-personal').value,
         rol: document.getElementById('nuevo-rol-personal').value
     };
+    
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit 
+        ? `${API_URL}/usuarios/${currentUser.id_restaurante}/${idEdit}`
+        : `${API_URL}/usuarios/${currentUser.id_restaurante}`;
+
     try {
-        const res = await fetch(`${API_URL}/usuarios/${currentUser.id_restaurante}`, {
-            method: 'POST',
+        const res = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         const result = await res.json();
         if(res.ok) {
-            document.getElementById('formCrearPersonal').reset();
+            cancelarEdicionPersonal();
             cargarTablaPersonal();
-            showToast("Usuario agregado al sistema", "success");
-        } else { showToast(result.detail || "Error al crear", "error"); }
+            showToast(isEdit ? "Usuario actualizado" : "Usuario agregado al sistema", "success");
+        } else { showToast(result.detail || "Error al guardar", "error"); }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
 }
@@ -582,10 +574,10 @@ async function descargarReportePDF() {
         template.style.display = 'block'; 
         
         const opciones = {
-            margin:       10,
+            margin:       15,
             filename:     `Dashboard_GastroStock_${new Date().toLocaleDateString()}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
+            html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
@@ -604,10 +596,12 @@ async function cargarAdminDashboard() {
     try {
         const res = await fetch(`${API_URL}/admin/restaurantes`);
         const result = await res.json();
+        clientesGlobal = result.data;
+
         const tbody = document.getElementById('tabla-admin-clientes');
         tbody.innerHTML = '';
         
-        result.data.forEach(cliente => {
+        clientesGlobal.forEach(cliente => {
             const esActivo = cliente.estado === 'activo';
             const estadoHtml = esActivo 
                 ? `<span class="badge badge-success">Activo</span>` 
@@ -623,6 +617,7 @@ async function cargarAdminDashboard() {
                     <td><small>U: ${cliente.username}<br>P: ${cliente.password}</small></td>
                     <td>${estadoHtml}</td>
                     <td>
+                        <button class="btn-action edit" onclick="cargarEdicionCliente(${cliente.id})">Editar</button>
                         <button class="btn-action edit" onclick="cambiarEstadoCliente(${cliente.id}, '${nuevoEstado}')">${btnSuspenderText}</button>
                         <button class="btn-action delete" onclick="eliminarCliente(${cliente.id})">Borrar</button>
                     </td>
@@ -631,26 +626,60 @@ async function cargarAdminDashboard() {
     } catch (error) { showToast("Error cargando clientes", "error"); }
 }
 
+function cargarEdicionCliente(id) {
+    const cli = clientesGlobal.find(c => c.id === id);
+    if (!cli) return;
+    
+    document.getElementById('edit-admin-id').value = cli.id;
+    document.getElementById('admin-restaurante').value = cli.nombre;
+    document.getElementById('admin-user').value = cli.username;
+    document.getElementById('admin-pass').value = cli.password;
+    
+    document.getElementById('header-admin-form').innerText = "EDITAR CLIENTE #" + cli.id;
+    document.getElementById('btn-submit-admin').innerText = 'Guardar Cambios';
+    document.getElementById('btn-cancelar-admin').style.display = 'inline-block';
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelarEdicionCliente() {
+    document.getElementById('formNuevoCliente').reset();
+    document.getElementById('edit-admin-id').value = '';
+    document.getElementById('header-admin-form').innerText = 'NUEVO CLIENTE';
+    document.getElementById('btn-submit-admin').innerText = '+ Crear Cliente';
+    document.getElementById('btn-cancelar-admin').style.display = 'none';
+}
+
 async function handleNuevoCliente(e) {
     e.preventDefault();
     toggleLoader(true);
+    
+    const idEdit = document.getElementById('edit-admin-id').value;
+    const isEdit = idEdit !== "";
+    
     const payload = {
         nombre_restaurante: document.getElementById('admin-restaurante').value,
         username: document.getElementById('admin-user').value,
         password: document.getElementById('admin-pass').value
     };
+    
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit 
+        ? `${API_URL}/admin/restaurantes/${idEdit}`
+        : `${API_URL}/admin/restaurantes`;
+
     try {
-        const response = await fetch(`${API_URL}/admin/restaurantes`, {
-            method: 'POST',
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
         const result = await response.json();
         if(response.ok) {
-            document.getElementById('formNuevoCliente').reset();
+            cancelarEdicionCliente();
             cargarAdminDashboard();
-            showToast("Cliente creado. Ya puede iniciar sesión.", "success");
-        } else { showToast(result.detail || "Error al crear", "error"); }
+            showToast(isEdit ? "Cliente actualizado correctamente" : "Cliente creado exitosamente", "success");
+        } else { showToast(result.detail || "Error al guardar", "error"); }
     } catch (error) { showToast("Error de conexión", "error"); } 
     finally { toggleLoader(false); }
 }

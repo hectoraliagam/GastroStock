@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 import mysql.connector
 
-app = FastAPI(title="GastroStock API", version="2.0", description="API para gestión de inventarios y sucursales")
+app = FastAPI(title="GastroStock API", version="2.1", description="API para gestión de inventarios y sucursales")
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
@@ -79,10 +79,8 @@ def login(data: LoginData):
     user = cursor.fetchone()
     cursor.close()
     conn.close()
-    
     if not user:
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
-    
     if user['rol'] != 'superadmin' and user['estado'] == 'suspendido': # type: ignore
         raise HTTPException(status_code=403, detail="Membresía suspendida. Contacte al proveedor.")
         
@@ -127,6 +125,26 @@ def admin_crear_cliente(cliente: NuevoCliente):
         cursor.close()
         conn.close()
 
+@app.put("/api/admin/restaurantes/{id_restaurante}", tags=["Superadmin"])
+def admin_editar_cliente(id_restaurante: int, cliente: NuevoCliente):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        conn.start_transaction()
+        cursor.execute("UPDATE restaurantes SET nombre = %s WHERE id = %s", (cliente.nombre_restaurante, id_restaurante))
+        cursor.execute("UPDATE usuarios SET username = %s, password = %s WHERE id_restaurante = %s AND rol = 'dueno'", 
+                    (cliente.username, cliente.password, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": "Cliente actualizado"}
+    except mysql.connector.Error as err:
+        conn.rollback()
+        if err.errno == 1062:
+            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe")
+        raise HTTPException(status_code=400, detail=str(err))
+    finally:
+        cursor.close()
+        conn.close()
+
 @app.put("/api/admin/restaurantes/{id_restaurante}/estado", tags=["Superadmin"])
 def admin_cambiar_estado(id_restaurante: int, data: EstadoCliente):
     conn = get_db_connection()
@@ -158,7 +176,7 @@ def admin_eliminar_cliente(id_restaurante: int):
         conn.close()
 
 # ==========================================
-# RUTAS: PROVEEDORES (NUEVO CRUD)
+# RUTAS: PROVEEDORES
 # ==========================================
 @app.get("/api/proveedores/{id_restaurante}", tags=["Proveedores"])
 def obtener_proveedores(id_restaurante: int):
@@ -349,26 +367,16 @@ def reporte_valorizacion(id_restaurante: int):
 def obtener_kpis_dashboard(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
-    # KPI 1: Capital Inmovilizado Total
     cursor.execute("SELECT SUM(cantidad_actual * costo_unitario) as capital FROM inventario WHERE id_restaurante = %s", (id_restaurante,))
     capital = cursor.fetchone()['capital'] or 0 # type: ignore
-    
-    # KPI 2: Conteo de Alertas Críticas
     cursor.execute("SELECT COUNT(*) as alertas FROM inventario WHERE id_restaurante = %s AND cantidad_actual <= stock_minimo", (id_restaurante,))
     alertas = cursor.fetchone()['alertas'] or 0 # type: ignore
-    
-    # KPI 3: Movimientos Registrados
     cursor.execute("SELECT tipo, COUNT(*) as total FROM movimientos m JOIN inventario i ON m.id_inventario = i.id WHERE i.id_restaurante = %s GROUP BY tipo", (id_restaurante,))
     movimientos = cursor.fetchall()
-    
-    # KPI 4: Proveedores Activos
     cursor.execute("SELECT nombre, dias_entrega, telefono FROM proveedores WHERE id_restaurante = %s", (id_restaurante,))
     proveedores = cursor.fetchall()
-    
     cursor.close()
     conn.close()
-    
     return {
         "status": "success", 
         "kpis": {
@@ -386,7 +394,7 @@ def obtener_kpis_dashboard(id_restaurante: int):
 def obtener_usuarios(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT id, username, rol FROM usuarios WHERE id_restaurante = %s", (id_restaurante,))
+    cursor.execute("SELECT id, username, password, rol FROM usuarios WHERE id_restaurante = %s", (id_restaurante,))
     usuarios = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -401,6 +409,24 @@ def crear_usuario(id_restaurante: int, user: NuevoUsuario):
                     (id_restaurante, user.username, user.password, user.rol))
         conn.commit()
         return {"status": "success", "message": "Usuario creado exitosamente"}
+    except mysql.connector.Error as err:
+        conn.rollback()
+        if err.errno == 1062:
+            raise HTTPException(status_code=400, detail="Ese nombre de usuario ya existe.")
+        raise HTTPException(status_code=400, detail=str(err))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/api/usuarios/{id_restaurante}/{id_usuario}", tags=["Usuarios"])
+def editar_usuario(id_restaurante: int, id_usuario: int, user: NuevoUsuario):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE usuarios SET username=%s, password=%s, rol=%s WHERE id=%s AND id_restaurante=%s",
+                    (user.username, user.password, user.rol, id_usuario, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": "Usuario actualizado"}
     except mysql.connector.Error as err:
         conn.rollback()
         if err.errno == 1062:
