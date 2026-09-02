@@ -97,6 +97,7 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
     background-color: transparent; color: var(--success); 
     border: 1px solid var(--success); padding: 8px 16px; 
     border-radius: 4px; font-weight: 500; cursor: pointer; transition: 0.3s; 
+    display: flex; justify-content: center; align-items: center; gap: 8px;
 }
 .btn-whatsapp:hover { background-color: var(--success); color: #ffffff; }
 
@@ -206,9 +207,52 @@ tr:hover { background-color: #242424; }
 
 /* --- 7. Responsivo --- */
 @media (max-width: 768px) {
-    .navbar h1 { font-size: 1.2rem; }
-    .nav-actions button { padding: 6px 10px; font-size: 0.85rem; }
-    .container { flex-direction: column; }
-    .col-left, .col-right { width: 100%; }
-    .crud-form-row { flex-direction: column; gap: 10px;}
+    /* Navbar adaptada */
+    .navbar { 
+        flex-direction: column; 
+        gap: 15px; 
+        padding: 15px 20px; 
+    }
+    .navbar h1 { font-size: 1.3rem; text-align: center; }
+    .nav-actions { 
+        flex-wrap: wrap; 
+        justify-content: center; 
+        width: 100%; 
+    }
+    .nav-actions button { 
+        flex: 1; 
+        min-width: 130px; 
+        padding: 8px; 
+        font-size: 0.85rem; 
+    }
+    
+    /* Layout a una columna */
+    .container { flex-direction: column; padding: 0 15px; }
+    .col-left, .col-right { width: 100%; min-width: 100%; }
+    
+    /* Ajuste de tarjetas y Login */
+    .login-box { padding: 25px 20px; margin: 0 15px; }
+    .card { padding: 15px; }
+    
+    /* Modales adaptados al tamaño de pantalla */
+    .modal { padding: 10px; }
+    .modal-content { padding: 20px 15px; max-height: 95vh; }
+    .crud-form { padding: 15px; }
+    .crud-form-row { flex-direction: column; gap: 12px; }
+    
+    /* Botones de acción en bloque */
+    .crud-form-actions { flex-direction: column; }
+    .crud-form-actions button { width: 100%; }
+    
+    /* Tipografía en widgets */
+    .widget-dinero .monto { font-size: 1.8rem; }
+    
+    /* Toasts centrados en la parte inferior */
+    .toast-container { 
+        left: 20px; 
+        right: 20px; 
+        bottom: 20px; 
+        align-items: center; 
+    }
+    .toast { min-width: 100%; box-sizing: border-box; }
 }
