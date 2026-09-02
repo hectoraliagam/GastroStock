@@ -49,7 +49,7 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
     position: sticky; top: 0; z-index: 100;
 }
 .navbar h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; color: var(--primary); }
-.nav-actions { display: flex; gap: 15px; align-items: center; }
+.nav-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 .container { 
     max-width: 1200px; margin: 30px auto; padding: 0 20px; 
@@ -59,7 +59,6 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
 .col-right { flex: 2; min-width: 300px; }
 
 /* --- 4. Componentes --- */
-/* Login Box */
 .login-box { 
     background: var(--bg-card); padding: 40px; border-radius: 8px; 
     border: 1px solid var(--border); width: 100%; max-width: 350px; 
@@ -69,7 +68,6 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
 .login-box p { color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem; }
 .login-box input { margin-bottom: 15px; }
 
-/* Botones */
 .btn-submit { 
     background-color: var(--primary); color: var(--bg-main); 
     border: none; padding: 12px 20px; border-radius: 4px; 
@@ -88,22 +86,14 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
 
 .btn-outline-primary {
     background-color: transparent; color: var(--primary); 
-    border: 1px solid var(--primary); padding: 8px 16px; 
+    border: 1px solid var(--primary); padding: 8px 12px; 
     border-radius: 4px; font-weight: 500; cursor: pointer; transition: 0.3s;
 }
 .btn-outline-primary:hover { background-color: var(--primary); color: var(--bg-main); }
 
-.btn-whatsapp { 
-    background-color: transparent; color: var(--success); 
-    border: 1px solid var(--success); padding: 8px 16px; 
-    border-radius: 4px; font-weight: 500; cursor: pointer; transition: 0.3s; 
-    display: flex; justify-content: center; align-items: center; gap: 8px;
-}
-.btn-whatsapp:hover { background-color: var(--success); color: #ffffff; }
-
 .btn-logout { 
     background: none; border: none; color: var(--text-muted); 
-    cursor: pointer; font-size: 0.9rem; transition: color 0.2s; 
+    cursor: pointer; font-size: 0.9rem; transition: color 0.2s; padding: 8px 12px;
 }
 .btn-logout:hover { color: var(--danger); }
 
@@ -116,7 +106,6 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
 .btn-action.edit:hover { background-color: var(--primary); color: #000; border-color: var(--primary); }
 .btn-action.delete:hover { background-color: var(--danger); color: #fff; border-color: var(--danger); }
 
-/* Tarjetas */
 .card { 
     background: var(--bg-card); padding: 25px; 
     border-radius: 8px; border: 1px solid var(--border);
@@ -134,7 +123,6 @@ h1, h2, h3, h4 { margin-top: 0; color: var(--text-main); }
 .widget-dinero h3 { font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
 .widget-dinero .monto { font-size: 2.2rem; font-weight: 300; margin: 0; color: var(--primary); }
 
-/* Formularios */
 .form-group { margin-bottom: 18px; }
 label { display: block; margin-bottom: 8px; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; }
 input, select { 
@@ -144,7 +132,6 @@ input, select {
 }
 input:focus, select:focus { border-color: var(--primary); }
 
-/* Formularios CRUD */
 .crud-form { background: #18181b; padding: 20px; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border); }
 .crud-form-row { display: flex; gap: 15px; margin-bottom: 15px; }
 .form-group-crud { display: flex; flex-direction: column; }
@@ -154,18 +141,17 @@ input:focus, select:focus { border-color: var(--primary); }
 .crud-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 .crud-form-actions .btn-submit { width: auto; }
 
-/* Tablas */
 .table-responsive { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; min-width: 500px; }
-th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid var(--border); }
+th, td { padding: 14px 15px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
 th { font-weight: 500; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
 tr:hover { background-color: #242424; }
 .listado-insumos { overflow-y: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 6px; flex-grow: 1; min-height: 150px; }
 
-/* Badges */
 .badge { padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
 .badge-danger { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
 .badge-success { background-color: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+.badge-info { background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); }
 
 /* --- 5. Modales --- */
 .modal { 
@@ -179,7 +165,8 @@ tr:hover { background-color: #242424; }
     text-align: center; position: relative; max-height: 90vh; display: flex; flex-direction: column;
 }
 .crud-modal-content { max-width: 650px; text-align: left; }
-.crud-modal-content h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem;}
+.modal-xl { max-width: 850px; text-align: left; }
+.modal-content h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px; font-size: 1.2rem;}
 .close-btn { color: var(--text-muted); position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; }
 .close-btn:hover { color: var(--text-main); }
 
@@ -207,52 +194,26 @@ tr:hover { background-color: #242424; }
 
 /* --- 7. Responsivo --- */
 @media (max-width: 768px) {
-    /* Navbar adaptada */
-    .navbar { 
-        flex-direction: column; 
-        gap: 15px; 
-        padding: 15px 20px; 
-    }
+    .navbar { flex-direction: column; gap: 15px; padding: 15px 20px; }
     .navbar h1 { font-size: 1.3rem; text-align: center; }
-    .nav-actions { 
-        flex-wrap: wrap; 
-        justify-content: center; 
-        width: 100%; 
-    }
-    .nav-actions button { 
-        flex: 1; 
-        min-width: 130px; 
-        padding: 8px; 
-        font-size: 0.85rem; 
-    }
+    .nav-actions { flex-wrap: wrap; justify-content: center; width: 100%; }
+    .nav-actions button { flex: 1; min-width: 130px; padding: 8px; font-size: 0.85rem; }
     
-    /* Layout a una columna */
     .container { flex-direction: column; padding: 0 15px; }
     .col-left, .col-right { width: 100%; min-width: 100%; }
     
-    /* Ajuste de tarjetas y Login */
     .login-box { padding: 25px 20px; margin: 0 15px; }
     .card { padding: 15px; }
     
-    /* Modales adaptados al tamaño de pantalla */
     .modal { padding: 10px; }
     .modal-content { padding: 20px 15px; max-height: 95vh; }
     .crud-form { padding: 15px; }
     .crud-form-row { flex-direction: column; gap: 12px; }
     
-    /* Botones de acción en bloque */
     .crud-form-actions { flex-direction: column; }
     .crud-form-actions button { width: 100%; }
     
-    /* Tipografía en widgets */
     .widget-dinero .monto { font-size: 1.8rem; }
-    
-    /* Toasts centrados en la parte inferior */
-    .toast-container { 
-        left: 20px; 
-        right: 20px; 
-        bottom: 20px; 
-        align-items: center; 
-    }
+    .toast-container { left: 20px; right: 20px; bottom: 20px; align-items: center; }
     .toast { min-width: 100%; box-sizing: border-box; }
 }

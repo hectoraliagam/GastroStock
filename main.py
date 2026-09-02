@@ -2,9 +2,10 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import Optional
 import mysql.connector
 
-app = FastAPI(title="GastroStock API", version="1.0", description="API para gestión de inventarios y sucursales")
+app = FastAPI(title="GastroStock API", version="2.0", description="API para gestión de inventarios y sucursales")
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
@@ -38,9 +39,15 @@ class Movimiento(BaseModel):
 
 class ItemInventario(BaseModel):
     ingrediente: str
+    id_proveedor: Optional[int] = None
     unidad: str
     stock_minimo: float
     costo_unitario: float
+
+class Proveedor(BaseModel):
+    nombre: str
+    telefono: str
+    dias_entrega: str
 
 class NuevoCliente(BaseModel):
     nombre_restaurante: str
@@ -151,13 +158,79 @@ def admin_eliminar_cliente(id_restaurante: int):
         conn.close()
 
 # ==========================================
-# RUTAS: INVENTARIO Y MOVIMIENTOS
+# RUTAS: PROVEEDORES (NUEVO CRUD)
+# ==========================================
+@app.get("/api/proveedores/{id_restaurante}", tags=["Proveedores"])
+def obtener_proveedores(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM proveedores WHERE id_restaurante = %s ORDER BY nombre ASC", (id_restaurante,))
+    proveedores = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"status": "success", "data": proveedores}
+
+@app.post("/api/proveedores/{id_restaurante}", tags=["Proveedores"])
+def crear_proveedor(id_restaurante: int, prov: Proveedor):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        sql = "INSERT INTO proveedores (id_restaurante, nombre, telefono, dias_entrega) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (id_restaurante, prov.nombre, prov.telefono, prov.dias_entrega))
+        conn.commit()
+        return {"status": "success", "message": "Proveedor registrado"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.put("/api/proveedores/{id_restaurante}/{id_proveedor}", tags=["Proveedores"])
+def editar_proveedor(id_restaurante: int, id_proveedor: int, prov: Proveedor):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        sql = "UPDATE proveedores SET nombre=%s, telefono=%s, dias_entrega=%s WHERE id=%s AND id_restaurante=%s"
+        cursor.execute(sql, (prov.nombre, prov.telefono, prov.dias_entrega, id_proveedor, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": "Proveedor actualizado"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cursor.close()
+        conn.close()
+
+@app.delete("/api/proveedores/{id_restaurante}/{id_proveedor}", tags=["Proveedores"])
+def eliminar_proveedor(id_restaurante: int, id_proveedor: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM proveedores WHERE id = %s AND id_restaurante = %s", (id_proveedor, id_restaurante))
+        conn.commit()
+        return {"status": "success", "message": "Proveedor eliminado"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail="No se puede eliminar (Puede estar vinculado a inventario).")
+    finally:
+        cursor.close()
+        conn.close()
+
+# ==========================================
+# RUTAS: INVENTARIO
 # ==========================================
 @app.get("/api/inventario/{id_restaurante}", tags=["Inventario"])
 def obtener_inventario(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM inventario WHERE id_restaurante = %s ORDER BY ingrediente ASC", (id_restaurante,))
+    cursor.execute("""
+        SELECT i.*, p.nombre as proveedor_nombre 
+        FROM inventario i 
+        LEFT JOIN proveedores p ON i.id_proveedor = p.id 
+        WHERE i.id_restaurante = %s 
+        ORDER BY i.ingrediente ASC
+    """, (id_restaurante,))
     items = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -170,8 +243,8 @@ def crear_insumo(id_restaurante: int, item: ItemInventario):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        sql = "INSERT INTO inventario (id_restaurante, ingrediente, unidad, stock_minimo, costo_unitario) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(sql, (id_restaurante, item.ingrediente, item.unidad, item.stock_minimo, item.costo_unitario))
+        sql = "INSERT INTO inventario (id_restaurante, ingrediente, id_proveedor, unidad, stock_minimo, costo_unitario) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, (id_restaurante, item.ingrediente, item.id_proveedor, item.unidad, item.stock_minimo, item.costo_unitario))
         conn.commit()
         return {"status": "success", "message": "Insumo agregado exitosamente"}
     except Exception as e:
@@ -188,10 +261,10 @@ def editar_insumo(id_restaurante: int, id_insumo: int, item: ItemInventario):
     try:
         sql = """
             UPDATE inventario 
-            SET ingrediente = %s, unidad = %s, stock_minimo = %s, costo_unitario = %s 
+            SET ingrediente = %s, id_proveedor = %s, unidad = %s, stock_minimo = %s, costo_unitario = %s 
             WHERE id = %s AND id_restaurante = %s
         """
-        cursor.execute(sql, (item.ingrediente, item.unidad, item.stock_minimo, item.costo_unitario, id_insumo, id_restaurante))
+        cursor.execute(sql, (item.ingrediente, item.id_proveedor, item.unidad, item.stock_minimo, item.costo_unitario, id_insumo, id_restaurante))
         conn.commit()
         return {"status": "success", "message": "Insumo actualizado"}
     except Exception as e:
@@ -216,6 +289,9 @@ def eliminar_insumo(id_restaurante: int, id_insumo: int):
         cursor.close()
         conn.close()
 
+# ==========================================
+# RUTAS: MOVIMIENTOS Y KARDEX (HISTORIAL)
+# ==========================================
 @app.post("/api/movimientos", tags=["Kardex"])
 def registrar_movimiento(mov: Movimiento):
     conn = get_db_connection()
@@ -236,8 +312,24 @@ def registrar_movimiento(mov: Movimiento):
         cursor.close()
         conn.close()
 
+@app.get("/api/movimientos/{id_restaurante}", tags=["Kardex"])
+def historial_movimientos(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT m.id, m.tipo, m.cantidad, m.motivo, m.usuario, m.fecha, i.ingrediente, i.unidad
+        FROM movimientos m
+        JOIN inventario i ON m.id_inventario = i.id
+        WHERE i.id_restaurante = %s
+        ORDER BY m.fecha DESC LIMIT 100
+    """, (id_restaurante,))
+    historial = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return {"status": "success", "data": historial}
+
 # ==========================================
-# RUTAS: REPORTES Y ALERTAS
+# RUTAS: REPORTES
 # ==========================================
 @app.get("/api/reportes/valorizacion/{id_restaurante}", tags=["Reportes"])
 def reporte_valorizacion(id_restaurante: int):
@@ -253,32 +345,39 @@ def reporte_valorizacion(id_restaurante: int):
     conn.close()
     return {"capital_total_almacen": round(total_capital, 2), "detalle": items}
 
-@app.get("/api/alertas/compras/{id_restaurante}", tags=["Reportes"])
-def generar_lista_compras_whatsapp(id_restaurante: int):
+@app.get("/api/reportes/kpis/{id_restaurante}", tags=["Reportes"])
+def obtener_kpis_dashboard(id_restaurante: int):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT i.ingrediente, i.cantidad_actual, i.stock_minimo, i.unidad, p.nombre as proveedor, p.telefono
-        FROM inventario i
-        LEFT JOIN proveedores p ON i.id_proveedor = p.id
-        WHERE i.cantidad_actual <= i.stock_minimo AND i.id_restaurante = %s
-    """, (id_restaurante,))
-    faltantes = cursor.fetchall()
+    
+    # KPI 1: Capital Inmovilizado Total
+    cursor.execute("SELECT SUM(cantidad_actual * costo_unitario) as capital FROM inventario WHERE id_restaurante = %s", (id_restaurante,))
+    capital = cursor.fetchone()['capital'] or 0 # type: ignore
+    
+    # KPI 2: Conteo de Alertas Críticas
+    cursor.execute("SELECT COUNT(*) as alertas FROM inventario WHERE id_restaurante = %s AND cantidad_actual <= stock_minimo", (id_restaurante,))
+    alertas = cursor.fetchone()['alertas'] or 0 # type: ignore
+    
+    # KPI 3: Movimientos Registrados
+    cursor.execute("SELECT tipo, COUNT(*) as total FROM movimientos m JOIN inventario i ON m.id_inventario = i.id WHERE i.id_restaurante = %s GROUP BY tipo", (id_restaurante,))
+    movimientos = cursor.fetchall()
+    
+    # KPI 4: Proveedores Activos
+    cursor.execute("SELECT nombre, dias_entrega, telefono FROM proveedores WHERE id_restaurante = %s", (id_restaurante,))
+    proveedores = cursor.fetchall()
+    
     cursor.close()
     conn.close()
     
-    if not faltantes:
-        return {"mensaje_generado": "Todo en orden. No hay compras urgentes hoy."}
-    
-    mensaje_wa = "ALERTA DE COMPRAS - CIERRE DE TURNO \n\n"
-    for item in faltantes:
-        comprar = item['stock_minimo'] - item['cantidad_actual'] + item['stock_minimo'] # type: ignore
-        prov = item['proveedor'] or "Sin asignar" # type: ignore
-        tel = item['telefono'] or "-" # type: ignore
-        mensaje_wa += f"- {item['ingrediente']} (Stock: {item['cantidad_actual']}{item['unidad']})\n" # type: ignore
-        mensaje_wa += f"  Proveedor: {prov} ({tel})\n"
-        mensaje_wa += f"  Sugerido: {comprar}{item['unidad']}\n\n" # type: ignore
-    return {"status": "success", "mensaje_generado": mensaje_wa}
+    return {
+        "status": "success", 
+        "kpis": {
+            "capital": float(capital), # type: ignore
+            "alertas": alertas, 
+            "movimientos": movimientos, 
+            "proveedores": proveedores
+        }
+    }
 
 # ==========================================
 # RUTAS: GESTIÓN DE USUARIOS
@@ -327,40 +426,3 @@ def eliminar_usuario(id_restaurante: int, id_usuario: int):
     finally:
         cursor.close()
         conn.close()
-        
-# ==========================================
-# RUTAS: REPORTES
-# ==========================================
-@app.get("/api/reportes/kpis/{id_restaurante}", tags=["Reportes"])
-def obtener_kpis_dashboard(id_restaurante: int):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    
-    # KPI 1: Capital Inmovilizado Total
-    cursor.execute("SELECT SUM(cantidad_actual * costo_unitario) as capital FROM inventario WHERE id_restaurante = %s", (id_restaurante,))
-    capital = cursor.fetchone()['capital'] or 0 # type: ignore
-    
-    # KPI 2: Conteo de Alertas Críticas
-    cursor.execute("SELECT COUNT(*) as alertas FROM inventario WHERE id_restaurante = %s AND cantidad_actual <= stock_minimo", (id_restaurante,))
-    alertas = cursor.fetchone()['alertas'] or 0 # type: ignore
-    
-    # KPI 3: Movimientos Registrados
-    cursor.execute("SELECT tipo, COUNT(*) as total FROM movimientos m JOIN inventario i ON m.id_inventario = i.id WHERE i.id_restaurante = %s GROUP BY tipo", (id_restaurante,))
-    movimientos = cursor.fetchall()
-    
-    # KPI 4: Proveedores Activos
-    cursor.execute("SELECT nombre, dias_entrega, telefono FROM proveedores WHERE id_restaurante = %s", (id_restaurante,))
-    proveedores = cursor.fetchall()
-    
-    cursor.close()
-    conn.close()
-    
-    return {
-        "status": "success", 
-        "kpis": {
-            "capital": float(capital), # type: ignore
-            "alertas": alertas, 
-            "movimientos": movimientos, 
-            "proveedores": proveedores
-        }
-    }

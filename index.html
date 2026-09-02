@@ -74,17 +74,20 @@
         <header class="navbar">
             <h1>GastroStock</h1>
             <div class="nav-actions">
-                <button id="btn-crud-personal" class="btn-outline-primary" onclick="abrirCrudPersonal()">
-                    Gestionar Personal
+                <button id="btn-historial" class="btn-outline-primary" onclick="abrirHistorial()">
+                    Kardex (Historial)
+                </button>
+                <button id="btn-crud-proveedores" class="btn-outline-primary" onclick="abrirCrudProveedores()">
+                    Proveedores
                 </button>
                 <button id="btn-crud-insumos" class="btn-outline-primary" onclick="abrirCrud()">
-                    Configurar Insumos
+                    Insumos
+                </button>
+                <button id="btn-crud-personal" class="btn-outline-primary" onclick="abrirCrudPersonal()">
+                    Personal
                 </button>
                 <button id="btn-descargar-pdf" class="btn-outline-primary" onclick="descargarReportePDF()">
                     Descargar Reporte
-                </button>
-                <button class="btn-whatsapp" onclick="mostrarModalProximaAct()">
-                    Notificar Gerencia
                 </button>
                 <button class="btn-logout" onclick="cerrarSesion()">Salir</button>
             </div>
@@ -118,7 +121,7 @@
                         </div>
                         <div class="form-group">
                             <label>Justificación</label>
-                            <input type="text" id="motivo" required placeholder="Detalle de la operación">
+                            <input type="text" id="motivo" required placeholder="Ej. Lote semanal, Descarte de caducados...">
                         </div>
                         <button type="submit" class="btn-submit">Procesar Transacción</button>
                     </form>
@@ -133,6 +136,7 @@
                             <thead>
                                 <tr>
                                     <th>Ingrediente</th>
+                                    <th>Proveedor</th>
                                     <th>Stock Actual</th>
                                     <th>Estado</th>
                                     <th class="col-valorizacion">Valorización</th>
@@ -147,7 +151,7 @@
     </section>
 
     <!-- ==========================================
-         ZONA DE MODALES 
+         ZONA DE MODALES (CRUDS Y VISTAS)
     ========================================== -->
     
     <!-- Modal: Gestión de Insumos -->
@@ -162,6 +166,12 @@
                     <div class="form-group-crud flex-2">
                         <label>Nombre del Insumo</label>
                         <input type="text" id="nuevo-nombre" placeholder="Ej. Tomate Italiano" required>
+                    </div>
+                    <div class="form-group-crud flex-1">
+                        <label>Proveedor (Opcional)</label>
+                        <select id="nuevo-proveedor">
+                            <option value="">Sin proveedor asignado</option>
+                        </select>
                     </div>
                     <div class="form-group-crud flex-1">
                         <label>Unidad</label>
@@ -199,6 +209,49 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-crud-insumos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Gestión de Proveedores -->
+    <div id="modal-proveedores" class="modal">
+        <div class="modal-content crud-modal-content">
+            <span class="close-btn" onclick="cerrarCrudProveedores()">&times;</span>
+            <h2>Directorio de Proveedores</h2>
+
+            <form id="formCrearProveedor" class="crud-form">
+                <input type="hidden" id="edit-prov-id" value="">
+                <div class="crud-form-row">
+                    <div class="form-group-crud flex-2">
+                        <label>Empresa / Nombre</label>
+                        <input type="text" id="prov-nombre" placeholder="Ej. Mercado Central" required>
+                    </div>
+                    <div class="form-group-crud flex-1">
+                        <label>Teléfono</label>
+                        <input type="text" id="prov-telefono" placeholder="Ej. 999111222">
+                    </div>
+                    <div class="form-group-crud flex-1">
+                        <label>Días de Entrega</label>
+                        <input type="text" id="prov-dias" placeholder="Ej. Lunes y Jueves">
+                    </div>
+                </div>
+                <div class="crud-form-actions">
+                    <button type="button" id="btn-cancelar-prov" class="btn-cancel" style="display: none;" onclick="cancelarEdicionProveedor()">Cancelar</button>
+                    <button type="submit" id="btn-submit-prov" class="btn-submit">Guardar Proveedor</button>
+                </div>
+            </form>
+
+            <div class="table-responsive listado-insumos">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Proveedor</th>
+                            <th>Contacto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-crud-proveedores"></tbody>
                 </table>
             </div>
         </div>
@@ -248,18 +301,30 @@
         </div>
     </div>
 
-    <!-- Modal: Próxima Actualización -->
-    <div id="modal-update" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="cerrarModal()">&times;</span>
-            <div class="modal-icon" style="font-size: 40px; margin-bottom: 15px;">🚀</div>
-            <h2>Módulo en Configuración</h2>
-            <p>La integración con <strong>WhatsApp automatizado</strong> estará disponible en la próxima actualización del sistema. Gracias.</p>
-            <button class="btn-submit" onclick="cerrarModal()" style="margin-top: 15px;">Entendido</button>
+    <!-- Modal: Historial (Kardex) -->
+    <div id="modal-historial" class="modal">
+        <div class="modal-content modal-xl">
+            <span class="close-btn" onclick="cerrarHistorial()">&times;</span>
+            <h2>Historial de Movimientos (Kardex)</h2>
+            <div class="table-responsive listado-insumos" style="max-height: 400px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Insumo</th>
+                            <th>Tipo</th>
+                            <th>Cant.</th>
+                            <th>Motivo</th>
+                            <th>Usuario</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-movimientos"></tbody>
+                </table>
+            </div>
         </div>
     </div>
     
-    <!-- Plantilla oculta -->
+    <!-- Plantilla Oculta para el PDF Gerencial -->
     <div id="pdf-template" style="display: none; padding: 40px; font-family: 'Segoe UI', sans-serif; color: #000; background: #fff; width: 800px;">
         <h1 style="color: #d4af37; border-bottom: 2px solid #333; padding-bottom: 10px;">📊 Dashboard Gerencial - GastroStock</h1>
         
@@ -278,11 +343,9 @@
             </div>
         </div>
 
-        <!-- Sección del Kardex -->
         <h3 style="margin-top: 40px; color: #333;">📦 Frecuencia de Movimientos (Kardex)</h3>
         <ul id="kpi-lista-movimientos" style="color: #555; font-size: 16px; line-height: 1.8;"></ul>
 
-        <!-- Nueva Sección de Proveedores -->
         <h3 style="margin-top: 40px; color: #333;">📞 Directorio de Proveedores</h3>
         <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; text-align: left;">
             <thead>
@@ -292,9 +355,7 @@
                     <th style="padding: 10px; border: 1px solid #ddd;">Días de Entrega</th>
                 </tr>
             </thead>
-            <tbody id="kpi-lista-proveedores">
-                <!-- Los proveedores se inyectarán aquí -->
-            </tbody>
+            <tbody id="kpi-lista-proveedores"></tbody>
         </table>
     </div>
 
