@@ -1,8 +1,8 @@
 /* ==========================================
    CONFIGURACIÓN Y VARIABLES GLOBALES
 ========================================== */
-// const API_URL = 'http://127.0.0.1:8000/api';
-const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+const API_URL = 'http://127.0.0.1:8000/api';
+// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 
 let currentUser = JSON.parse(localStorage.getItem('insumia_user'));
 let inventarioGlobal = [];
