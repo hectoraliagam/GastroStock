@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional
 import mysql.connector
 
-app = FastAPI(title="GastroStock API", version="2.1", description="API para gestión de inventarios y sucursales")
+app = FastAPI(title="Insumia API", version="0.2.2", description="API para gestión de inventarios y sucursales")
 
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]

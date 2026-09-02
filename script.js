@@ -4,7 +4,7 @@
 // const API_URL = 'http://127.0.0.1:8000/api';
 const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 
-let currentUser = JSON.parse(localStorage.getItem('gastro_user'));
+let currentUser = JSON.parse(localStorage.getItem('insumia_user'));
 let inventarioGlobal = [];
 let proveedoresGlobal = [];
 let clientesGlobal = [];
@@ -71,7 +71,7 @@ async function handleLogin(e) {
         
         if (res.ok) {
             currentUser = data.user;
-            localStorage.setItem('gastro_user', JSON.stringify(currentUser));
+            localStorage.setItem('insumia_user', JSON.stringify(currentUser));
             showToast("Acceso autorizado", "success");
             iniciarDashboard();
         } else {
@@ -85,7 +85,7 @@ async function handleLogin(e) {
 }
 
 function cerrarSesion() {
-    localStorage.removeItem('gastro_user');
+    localStorage.removeItem('insumia_user');
     currentUser = null;
     document.getElementById('app-dashboard').style.display = 'none';
     document.getElementById('superadmin-dashboard').style.display = 'none';
@@ -575,7 +575,7 @@ async function descargarReportePDF() {
         
         const opciones = {
             margin:       15,
-            filename:     `Dashboard_GastroStock_${new Date().toLocaleDateString()}.pdf`,
+            filename:     `Dashboard_Insumia_${new Date().toLocaleDateString()}.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }

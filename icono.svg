@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%">
+    <!-- Fondo oscuro con bordes suaves -->
+    <rect width="1024" height="1024" rx="220" fill="#18181b" />
+
+    <!-- Grupo centrado y escalado al máximo para cubrir el área 1x1 -->
+    <g transform="translate(512, 620)">
+        
+        <!-- ========================================== -->
+        <!-- CAJA BASE (ALMACÉN / INSUMIA)              -->
+        <!-- ========================================== -->
+        
+        <!-- Cara Izquierda (Sombra - Dorado Oscuro) -->
+        <path d="M 0 0 L -360 -180 L -360 180 L 0 360 Z" fill="#b5952f" />
+        
+        <!-- Cara Derecha (Luz - Dorado Principal) -->
+        <path d="M 0 0 L 360 -180 L 360 180 L 0 360 Z" fill="#d4af37" />
+        
+        <!-- Cara Superior (Blanca/Gris Claro) -->
+        <path d="M 0 0 L -360 -180 L 0 -360 L 360 -180 Z" fill="#f3f4f6" />
+
+        <!-- Sombra proyectada del punto flotante (Transparente) -->
+        <path d="M 0 -108 L -144 -180 L 0 -252 L 144 -180 Z" fill="rgba(0, 0, 0, 0.12)" />
+
+
+        <!-- ========================================== -->
+        <!-- PUNTO FLOTANTE (ESTADO ÓPTIMO / LETRA "I") -->
+        <!-- ========================================== -->
+        
+        <!-- Cara Izquierda (Verde Oscuro) -->
+        <path d="M 0 -432 L -144 -504 L -144 -360 L 0 -288 Z" fill="#059669" />
+        
+        <!-- Cara Derecha (Verde Principal) -->
+        <path d="M 0 -432 L 144 -504 L 144 -360 L 0 -288 Z" fill="#10b981" />
+        
+        <!-- Cara Superior (Verde Claro) -->
+        <path d="M 0 -432 L -144 -504 L 0 -576 L 144 -504 Z" fill="#34d399" />
+        
+    </g>
+</svg>
