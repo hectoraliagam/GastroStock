@@ -1,8 +1,8 @@
 /* ==========================================
    CONFIGURACIÓN Y VARIABLES GLOBALES
 ========================================== */
-const API_URL = 'http://127.0.0.1:8000/api';
-// const API_URL = 'https://gastrostock-27s9.onrender.com/api';
+// const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL = 'https://gastrostock-27s9.onrender.com/api';
 
 let currentUser = JSON.parse(localStorage.getItem('gastro_user'));
 let inventarioGlobal = [];
@@ -115,6 +115,7 @@ function iniciarDashboard() {
     document.querySelector('.col-valorizacion').style.display = esEmpleado ? 'none' : 'table-cell';
     document.getElementById('btn-crud-insumos').style.display = esEmpleado ? 'none' : 'flex';
     document.getElementById('btn-crud-personal').style.display = esEmpleado ? 'none' : 'flex';
+    document.getElementById('btn-descargar-pdf').style.display = esEmpleado ? 'none' : 'flex';
     
     cargarDashboardCliente();
 }
@@ -391,6 +392,69 @@ async function eliminarPersonal(idUsuario) {
         showToast("Error de conexión", "error"); 
     } finally { 
         toggleLoader(false); 
+    }
+}
+
+/* ==========================================
+   MÓDULO: EXPORTAR PDF (DUEÑOS)
+========================================== */
+async function descargarReportePDF() {
+    toggleLoader(true);
+    try {
+        const res = await fetch(`${API_URL}/reportes/kpis/${currentUser.id_restaurante}`);
+        const data = await res.json();
+        const kpis = data.kpis;
+        
+        document.getElementById('kpi-capital').innerText = `S/ ${kpis.capital.toFixed(2)}`;
+        document.getElementById('kpi-alertas').innerText = kpis.alertas;
+        document.getElementById('kpi-proveedores').innerText = kpis.proveedores.length;
+        
+        const listaMov = document.getElementById('kpi-lista-movimientos');
+        listaMov.innerHTML = '';
+        if (kpis.movimientos.length === 0) {
+            listaMov.innerHTML = '<li>No hay operaciones registradas aún.</li>';
+        } else {
+            kpis.movimientos.forEach(m => {
+                listaMov.innerHTML += `<li><strong>${m.tipo.toUpperCase()}:</strong> ${m.total} registros operativos</li>`;
+            });
+        }
+
+        const listaProv = document.getElementById('kpi-lista-proveedores');
+        listaProv.innerHTML = '';
+        if (kpis.proveedores.length === 0) {
+            listaProv.innerHTML = '<tr><td colspan="3" style="padding: 10px; border: 1px solid #ddd; text-align: center;">No hay proveedores registrados.</td></tr>';
+        } else {
+            kpis.proveedores.forEach(p => {
+                const telefono = p.telefono || 'Sin número';
+                const dias = p.dias_entrega || 'No especificado';
+                listaProv.innerHTML += `
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: #333;"><strong>${p.nombre}</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: #555;">${telefono}</td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: #555;">${dias}</td>
+                    </tr>`;
+            });
+        }
+
+        const template = document.getElementById('pdf-template');
+        template.style.display = 'block'; 
+        
+        const opciones = {
+            margin:       10,
+            filename:     `Dashboard_GastroStock_${new Date().toLocaleDateString()}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        await html2pdf().set(opciones).from(template).save();
+        template.style.display = 'none'; 
+        
+        showToast("Dashboard gerencial generado", "success");
+    } catch (error) {
+        showToast("Error al generar el PDF", "error");
+    } finally {
+        toggleLoader(false);
     }
 }
 

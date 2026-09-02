@@ -327,3 +327,40 @@ def eliminar_usuario(id_restaurante: int, id_usuario: int):
     finally:
         cursor.close()
         conn.close()
+        
+# ==========================================
+# RUTAS: REPORTES
+# ==========================================
+@app.get("/api/reportes/kpis/{id_restaurante}", tags=["Reportes"])
+def obtener_kpis_dashboard(id_restaurante: int):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    # KPI 1: Capital Inmovilizado Total
+    cursor.execute("SELECT SUM(cantidad_actual * costo_unitario) as capital FROM inventario WHERE id_restaurante = %s", (id_restaurante,))
+    capital = cursor.fetchone()['capital'] or 0 # type: ignore
+    
+    # KPI 2: Conteo de Alertas Críticas
+    cursor.execute("SELECT COUNT(*) as alertas FROM inventario WHERE id_restaurante = %s AND cantidad_actual <= stock_minimo", (id_restaurante,))
+    alertas = cursor.fetchone()['alertas'] or 0 # type: ignore
+    
+    # KPI 3: Movimientos Registrados
+    cursor.execute("SELECT tipo, COUNT(*) as total FROM movimientos m JOIN inventario i ON m.id_inventario = i.id WHERE i.id_restaurante = %s GROUP BY tipo", (id_restaurante,))
+    movimientos = cursor.fetchall()
+    
+    # KPI 4: Proveedores Activos
+    cursor.execute("SELECT nombre, dias_entrega, telefono FROM proveedores WHERE id_restaurante = %s", (id_restaurante,))
+    proveedores = cursor.fetchall()
+    
+    cursor.close()
+    conn.close()
+    
+    return {
+        "status": "success", 
+        "kpis": {
+            "capital": float(capital), # type: ignore
+            "alertas": alertas, 
+            "movimientos": movimientos, 
+            "proveedores": proveedores
+        }
+    }
